@@ -1,52 +1,52 @@
 # Stet
 
-A FastAPI + HTMX web application to help address reviewer comments in Word manuscripts using AI.
+Stet helps you address reviewer comments in Word manuscripts. It reads a `.docx`, shows the comment threads, and uses a language model to suggest revisions and replies, then writes them back as Word tracked changes.
 
-> **stet** /stɛt/ — *Latin: "let it stand"* — A proofreader's term meaning "ignore the correction, keep the original." Ironically, this app helps you *address* corrections, but with the wisdom to know when the original was right all along.
+> **stet** /stɛt/ — Latin for "let it stand" — a proofreader's mark meaning "ignore the correction, keep the original."
 
-## Quick Start
+## Quick start
 
-See [LAUNCH_GUIDE.md](LAUNCH_GUIDE.md) for detailed instructions.
+Python 3.10 or newer.
 
 ```bash
-# Activate virtual environment
-source .venv/bin/activate
-
-# Install dependencies
+python3 -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# Launch the application
+cp .env.example .env               # then set OPENAI_API_KEY
 python main.py
 ```
 
-Then open your browser to: **http://localhost:8000**
+Open **http://localhost:8000**.
 
-## Project Structure
+- `/` is the card UI: upload a document and work through comment threads one at a time.
+- `/workspace` is the agent workspace: open a folder, read the manuscript, and let the agent edit it.
 
-- `main.py` - FastAPI application entry point
-- `src/` - Main application code
-- `templates/` - Jinja2 HTML templates (HTMX partials)
-- `static/` - Static files (CSS, JS, images)
-- `docs/` - Specification and planning notes
-- `tests/` - Test files
-- `_archive/` - Old experimental code for reference
-- `test_data/synthetic/` - Synthetic fixtures (committed). `test_data/local/` - real manuscripts (gitignored)
-- `output/` - Generated outputs (gitignored)
-
-## Technology Stack
-
-- **Backend:** FastAPI (Python)
-- **Frontend:** HTMX + Tailwind CSS
-- **Templates:** Jinja2
-- **LLM Integration:** OpenAI, Ollama (configurable)
+The settings panel can take an OpenAI API key or an Ollama URL. If that field is empty, the app uses `OPENAI_API_KEY` from `.env`. Ollama must already be running locally if you choose it.
 
 ## Features
 
-- Upload DOCX files with reviewer comments
-- AI-powered suggestions for addressing comments
-- Context expansion for better understanding
-- Track changes and reply insertion
-- Paragraph split/merge support (LLM or manual editing can restructure paragraphs)
-- Field code preservation (EndNote/Zotero citations maintained across edits)
-- Session persistence
-- Custom LLM instructions per thread or session
+- Upload `.docx` files that contain reviewer comments
+- Suggested revisions and reviewer replies
+- Tracked changes written back into the Word file
+- EndNote and Zotero field codes kept across edits
+- Paragraph split and merge
+- An agent workspace that can read the manuscript plus reference PDF, spreadsheet, RTF, and PowerPoint files
+
+## Layout
+
+- `main.py` — application entry point
+- `src/` — application code
+- `templates/` and `static/` — the UI
+- `tests/` — the test suite, using fixtures in `test_data/synthetic/`
+- `test_data/local/` — for your own manuscripts; gitignored, so nothing you put there is committed
+- [docs/BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md) — building the Windows desktop app
+
+## Tests
+
+```bash
+.venv/bin/python -m pytest tests/
+```
+
+## License
+
+[MIT](LICENSE)

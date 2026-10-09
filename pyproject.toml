@@ -17,9 +17,8 @@ warn_return_any = true
 warn_unused_ignores = true
 ignore_missing_imports = true  # Gradual adoption - don't fail on untyped libraries
 
-# Exclude archived and test files from strict checking
+# Tests are exercised by pytest, not type-checked as library code
 exclude = [
-    "_archive/",
     "tests/",
 ]
 
@@ -44,7 +43,6 @@ addopts = "-v --tb=short"
 [tool.coverage.run]
 source = ["src"]
 omit = [
-    "_archive/*",
     "tests/*",
 ]
 

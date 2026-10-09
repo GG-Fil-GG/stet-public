@@ -4,7 +4,7 @@ This guide walks you through compiling and testing the Windows desktop distribut
 
 ## Prerequisites
 
-- **Python 3.8+** installed and on your PATH
+- **Python 3.10+** installed and on your PATH
 - **Git** (optional; only if you clone the repo)
 - Enough disk space for the virtual environment and the built executable (roughly 500 MB–1 GB)
 
@@ -13,7 +13,7 @@ This guide walks you through compiling and testing the Windows desktop distribut
 Open PowerShell or Command Prompt and go to the project folder:
 
 ```powershell
-cd C:\Users\tom78\Documents\stet
+cd C:\path\to\stet
 ```
 
 (Use your actual path if different.)
