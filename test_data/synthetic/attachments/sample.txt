@@ -1,0 +1,8 @@
+Stetomab Phase 3 Reference Notes
+
+This plain-text file is a synthetic fixture for the read_file plain-text reader.
+It contains a few short lines of reference material the agent might consult while
+editing a manuscript.
+
+Key endpoint: change in SBP from baseline at week 12.
+Population: intention-to-treat (ITT).

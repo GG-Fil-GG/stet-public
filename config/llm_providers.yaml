@@ -1,0 +1,103 @@
+# LLM Provider Configuration
+# Single source of truth for all LLM provider/model information.
+# Used by: Settings UI, LLMHandler, token counting, rate limiting
+
+# User's current OpenAI tier (affects rate limits)
+# Options: tier_1, tier_2, tier_3, tier_4, tier_5
+openai_tier: "tier_4"
+
+providers:
+  openai:
+    name: "OpenAI"
+    requires_api_key: true
+    default_model: "gpt-5-mini"
+    models:
+      gpt-5.2:
+        name: "GPT-5.2"
+        description: "Flagship model for coding and agentic tasks"
+        context_window: 400000
+        max_output: 128000
+        knowledge_cutoff: "2025-08-31"
+        supports_reasoning_tokens: true
+        supports_json: true
+        supports_vision: true
+        supports_audio: false
+        # Pricing per 1M tokens
+        cost_per_1m_input: 1.75
+        cost_per_1m_cached_input: 0.175
+        cost_per_1m_output: 14.00
+        # Rate limits by tier (RPM = requests/min, TPM = tokens/min)
+        rate_limits:
+          tier_1: { rpm: 500, tpm: 500000 }
+          tier_2: { rpm: 5000, tpm: 1000000 }
+          tier_3: { rpm: 5000, tpm: 2000000 }
+          tier_4: { rpm: 10000, tpm: 4000000 }
+          tier_5: { rpm: 15000, tpm: 40000000 }
+
+      gpt-5-mini:
+        name: "GPT-5 Mini"
+        description: "Fast, affordable"
+        context_window: 400000
+        max_output: 128000
+        knowledge_cutoff: "2024-05-31"
+        supports_reasoning_tokens: true
+        supports_json: true
+        supports_vision: true
+        supports_audio: false
+        cost_per_1m_input: 0.25
+        cost_per_1m_cached_input: 0.025
+        cost_per_1m_output: 2.00
+        rate_limits:
+          tier_1: { rpm: 500, tpm: 500000 }
+          tier_2: { rpm: 5000, tpm: 2000000 }
+          tier_3: { rpm: 5000, tpm: 4000000 }
+          tier_4: { rpm: 10000, tpm: 10000000 }
+          tier_5: { rpm: 30000, tpm: 180000000 }
+
+      gpt-5-nano:
+        name: "GPT-5 Nano"
+        description: "Cheapest, fastest"
+        context_window: 400000
+        max_output: 128000
+        knowledge_cutoff: "2024-05-31"
+        supports_reasoning_tokens: true
+        supports_json: true
+        supports_vision: true
+        supports_audio: false
+        cost_per_1m_input: 0.05
+        cost_per_1m_cached_input: 0.005
+        cost_per_1m_output: 0.40
+        rate_limits:
+          tier_1: { rpm: 500, tpm: 200000 }
+          tier_2: { rpm: 5000, tpm: 2000000 }
+          tier_3: { rpm: 5000, tpm: 4000000 }
+          tier_4: { rpm: 10000, tpm: 10000000 }
+          tier_5: { rpm: 30000, tpm: 180000000 }
+
+  ollama:
+    name: "Ollama (Local)"
+    requires_api_key: false
+    default_model: "llama3.1"
+    default_url: "http://localhost:11434"
+    # Ollama models are discovered at runtime via /api/tags endpoint
+    # These defaults are used when model-specific info is unavailable
+    model_defaults:
+      context_window: 8192      # Conservative default, many models support more
+      max_output: 4096
+      supports_json: true
+      supports_vision: false
+    # No rate limits for local models
+    rate_limits: null
+
+# Default LLM settings
+defaults:
+  temperature: 0.3
+  context_paragraphs_before: 2
+  context_paragraphs_after: 2
+
+# Token counting configuration
+token_counting:
+  # For OpenAI: use tiktoken with this encoding
+  openai_encoding: "cl100k_base"
+  # For unknown models: approximate chars per token
+  fallback_chars_per_token: 4

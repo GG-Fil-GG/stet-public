@@ -1,0 +1,14 @@
+---
+description: Format toolbar buttons must not steal focus from the editor
+globs: templates/**/*.html
+alwaysApply: false
+---
+
+# Format toolbar (B/I/U etc.) in revised text editor
+
+When editing the **format toolbar** in `templates/partials/card.html` (buttons for bold, italic, underline, superscript, subscript):
+
+- **Keep** `onmousedown="event.preventDefault();"` on each format button. Without it, the button takes focus on mousedown and the editor loses the text selection before the click handler runs, so formatting does nothing.
+- **Keep** `tabindex="-1"` on each format button so focus stays in the editor and the buttons don’t take focus from keyboard navigation.
+
+Do **not** remove these attributes when refactoring or restyling the toolbar. If you replace the button markup, re-add them.

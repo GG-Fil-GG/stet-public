@@ -1,0 +1,845 @@
+<!-- Macro for rendering a table group (multiple consecutive table rows as one table) -->
+{% macro render_table_group(group, highlight_para_id=None, highlight_exact_text=None, is_target=False) %}
+<div class="table-group-container relative overflow-x-auto
+            {% if group.continues_above %}table-continues-above{% endif %}
+            {% if group.continues_below %}table-continues-below{% endif %}">
+    <table class="border-collapse text-xs text-slate-700 min-w-full">
+        {% for row in group.rows %}
+        <tr>
+            {% set row_is_original = row.is_original_target|default(false) %}
+            {% for cell in row.cells %}
+            {% set highlight_this_cell = false %}
+            {% if row_is_original and highlight_exact_text and highlight_exact_text in cell.text %}
+                {% set highlight_this_cell = true %}
+            {% endif %}
+            <td class="border border-gray-300 px-2 py-1.5 whitespace-nowrap
+                       {% if highlight_this_cell %}bg-yellow-200{% elif row_is_original %}bg-yellow-50{% else %}bg-white{% endif %}
+                       {% if cell.is_revised %}text-green-700{% endif %}"
+                {% if cell.alignment %}style="text-align: {{ cell.alignment }};"{% endif %}>
+                {# Use formatted_html if available, otherwise plain text #}
+                {% if cell.formatted_html %}
+                    {{ cell.formatted_html | safe }}
+                {% else %}
+                    {{ cell.text }}
+                {% endif %}
+            </td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+    {% set any_revised = false %}
+    {% for row in group.rows %}
+        {% if row.is_revised %}{% set any_revised = true %}{% endif %}
+    {% endfor %}
+    {% if any_revised %}
+    <span class="text-green-600 text-xs mt-1 inline-block">(revised earlier in session)</span>
+    {% endif %}
+</div>
+{% endmacro %}
+
+<!-- Macro for rendering a single paragraph (non-table) -->
+{% macro render_paragraph(para, highlight_exact=False, exact_text=None, exact_text_occurrence=1) %}
+<div class="p-2 {% if highlight_exact %}bg-yellow-50{% else %}bg-gray-50{% endif %} border-l-2 {% if highlight_exact %}border-blue-400{% else %}border-gray-300{% endif %} rounded-r text-sm text-gray-600 leading-relaxed content-area-text"
+     {% if para.alignment %}style="text-align: {{ para.alignment }};"{% endif %}>
+    {% if highlight_exact and exact_text %}
+        {# Highlight the Nth occurrence of exact text, preserving formatting #}
+        {% set occurrence = exact_text_occurrence|default(1) %}
+        {% set source_html = para.formatted_html if para.formatted_html else para.text %}
+        {# Use server-side filter to insert <mark> tags while preserving HTML structure #}
+        {{ source_html | highlight_text(exact_text, occurrence) | safe }}
+    {% else %}
+        {# No highlighting - use formatted_html if available #}
+        {% if para.formatted_html %}
+            {{ para.formatted_html | safe }}
+        {% else %}
+            {{ para.text }}
+        {% endif %}
+    {% endif %}
+    {% if para.is_revised %}
+    <span class="text-green-600 text-xs">(revised earlier in session)</span>
+    {% endif %}
+</div>
+{% endmacro %}
+
+<!-- Macro for rendering a context item (could be paragraph or table_group) -->
+{% macro render_context_item(item, highlight_exact=False, exact_text=None, exact_text_occurrence=1) %}
+{% if item.type == 'table_group' %}
+    {{ render_table_group(item, highlight_exact_text=exact_text if highlight_exact else None) }}
+{% else %}
+    {{ render_paragraph(item, highlight_exact, exact_text, exact_text_occurrence) }}
+{% endif %}
+{% endmacro %}
+
+<!-- Macro for rendering a target item (could be paragraph or table_group) -->
+{% macro render_target_item(item, thread) %}
+{% if item.type == 'table_group' %}
+    {{ render_table_group(item, highlight_exact_text=thread.exact_text, is_target=True) }}
+{% elif item.type == 'table_row' %}
+    {# Single table row in target - wrap in a mini-group for consistent rendering #}
+    {% set mini_group = {'type': 'table_group', 'rows': [item], 'continues_above': item.row_number > 1, 'continues_below': item.row_number < item.total_rows} %}
+    {{ render_table_group(mini_group, highlight_exact_text=thread.exact_text if item.is_original_target else None, is_target=True) }}
+{% else %}
+    {# Regular paragraph in target #}
+    <div class="p-2 border-l-2 border-blue-400 rounded-r text-sm leading-relaxed content-area-text
+                {% if item.is_original_target %}bg-yellow-50{% else %}bg-blue-50{% endif %}"
+         {% if item.alignment %}style="text-align: {{ item.alignment }};"{% endif %}>
+        {% if item.is_original_target and thread.exact_text %}
+            {# Highlight the Nth occurrence of exact text, preserving formatting #}
+            {% set occurrence = thread.exact_text_occurrence|default(1) %}
+            {% set source_html = item.formatted_html if item.formatted_html else item.text %}
+            {# Use server-side filter to insert <mark> tags while preserving HTML structure #}
+            {{ source_html | highlight_text(thread.exact_text, occurrence) | safe }}
+        {% else %}
+            {# No highlighting - use formatted_html if available #}
+            {% if item.formatted_html %}
+                {{ item.formatted_html | safe }}
+            {% else %}
+                {{ item.text }}
+            {% endif %}
+        {% endif %}
+        {% if item.is_revised %}
+        <span class="text-green-600 text-xs">(revised earlier in session)</span>
+        {% endif %}
+    </div>
+{% endif %}
+{% endmacro %}
+
+<!-- Single Thread Card - Two Column Layout -->
+<div id="card-{{ thread.thread_id }}" 
+     data-status="{{ thread_status.value if thread_status.value is defined else thread_status }}"
+     data-has-suggestion="{{ 'true' if suggestion else 'false' }}"
+     data-has-accepted-revision="{{ 'true' if has_accepted_revision else 'false' }}"
+     data-resolved="{{ 'true' if thread.is_resolved else 'false' }}"
+     data-on-deleted-text="{{ 'true' if thread.is_on_deleted_text else 'false' }}"
+     hx-get="/thread/{{ session_id }}/{{ thread.thread_id }}"
+     hx-trigger="revisionAccepted from:body, acceptanceReset-{{ thread.thread_id }} from:body"
+     hx-swap="outerHTML"
+     class="thread-card bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden
+            {% if thread_status.value == 'accepted' or thread_status == 'accepted' %}border-l-4 border-l-green-500{% endif %}
+            {% if thread_status.value == 'skipped' or thread_status == 'skipped' %}border-l-4 border-l-gray-400 opacity-60{% endif %}">
+    
+    <!-- Card Header -->
+    <div class="bg-gray-50 border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+        <div class="flex items-center space-x-2 flex-shrink-0">
+            <span class="text-sm font-medium text-gray-600 whitespace-nowrap">Thread #{{ thread.thread_id }}</span>
+            {% if thread.is_resolved %}
+            <span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full whitespace-nowrap">Resolved</span>
+            {% endif %}
+            {% if thread.is_on_deleted_text %}
+            <span class="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded-full whitespace-nowrap" title="This comment is attached to deleted text and may not be visible in Word when Track Changes is hidden">On Deleted Text</span>
+            {% endif %}
+            {% if thread_status.value == 'accepted' or thread_status == 'accepted' %}
+            <span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded-full whitespace-nowrap">✓ Accepted</span>
+            {% elif thread_status.value == 'skipped' or thread_status == 'skipped' %}
+            <span class="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full whitespace-nowrap">Skipped</span>
+            {% endif %}
+        </div>
+        {% if thread.section %}
+        <span class="text-xs text-gray-400 truncate ml-2">{{ thread.section }}</span>
+        {% endif %}
+    </div>
+    
+    <!-- Two Column Content -->
+    <div class="flex">
+        
+        <!-- LEFT COLUMN: Document Content (60%) -->
+        <div class="w-3/5 min-w-0 border-r border-gray-100 p-4 space-y-3 overflow-hidden">
+            
+            <!-- Context (Preceding) -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Context (Preceding)</span>
+                    <div class="flex space-x-1">
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="before_plus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition
+                                           {% if settings.before_count >= 10 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if settings.before_count >= 10 %}disabled{% endif %}>
+                                ＋
+                            </button>
+                        </form>
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="before_minus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition
+                                           {% if settings.before_count == 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if settings.before_count == 0 %}disabled{% endif %}>
+                                −
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% if context_data.before %}
+                    {% for item in context_data.before %}
+                        {{ render_context_item(item) }}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-gray-400 italic">No preceding context</p>
+                {% endif %}
+            </div>
+            
+            <!-- Referenced Text -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Referenced Text</span>
+                    <div class="flex space-x-1">
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="ref_up_plus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition"
+                                    title="Add paragraph above">
+                                ↑＋
+                            </button>
+                        </form>
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="ref_up_minus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition
+                                           {% if settings.ref_start_offset >= 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if settings.ref_start_offset >= 0 %}disabled{% endif %}
+                                    title="Remove paragraph above">
+                                ↑−
+                            </button>
+                        </form>
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="ref_down_plus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition"
+                                    title="Add paragraph below">
+                                ↓＋
+                            </button>
+                        </form>
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="ref_down_minus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition
+                                           {% if settings.ref_end_offset <= 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if settings.ref_end_offset <= 0 %}disabled{% endif %}
+                                    title="Remove paragraph below">
+                                ↓−
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% if context_data.target %}
+                    {% for item in context_data.target %}
+                        {{ render_target_item(item, thread) }}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-gray-400 italic">No referenced text found</p>
+                {% endif %}
+            </div>
+            
+            <!-- Context (Following) -->
+            <div class="space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Context (Following)</span>
+                    <div class="flex space-x-1">
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="after_plus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition
+                                           {% if settings.after_count >= 10 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if settings.after_count >= 10 %}disabled{% endif %}>
+                                ＋
+                            </button>
+                        </form>
+                        <form hx-post="/expand_context/{{ session_id }}/{{ thread.thread_id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML">
+                            <input type="hidden" name="action" value="after_minus">
+                            <button type="submit" 
+                                    class="px-2 py-0.5 text-xs bg-gray-100 hover:bg-gray-200 rounded transition
+                                           {% if settings.after_count == 0 %}opacity-50 cursor-not-allowed{% endif %}"
+                                    {% if settings.after_count == 0 %}disabled{% endif %}>
+                                −
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% if context_data.after %}
+                    {% for item in context_data.after %}
+                        {{ render_context_item(item) }}
+                    {% endfor %}
+                {% else %}
+                    <p class="text-xs text-gray-400 italic">No following context</p>
+                {% endif %}
+            </div>
+            
+        </div>
+        
+        <!-- RIGHT COLUMN: Comment Thread (40%) -->
+        <div class="w-2/5 p-4 bg-amber-50/30">
+            
+            <!-- Comment Thread Header -->
+            <div class="mb-3">
+                <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">💬 Comment Thread</span>
+            </div>
+            
+            <!-- Comments -->
+            <div class="space-y-3">
+                {% for comment in thread.comments %}
+                <div class="{% if loop.first %}{% else %}ml-4 border-l-2 border-amber-200 pl-3{% endif %}">
+                    <div class="flex items-baseline justify-between mb-1">
+                        <span class="font-medium text-sm text-gray-800">{{ comment.author }}</span>
+                        <span class="text-xs text-gray-400">{{ comment.date[:10] if comment.date else '' }}</span>
+                    </div>
+                    <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{{ comment.text }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <!-- Instructions (collapsible) -->
+    <div class="border-t border-gray-200 px-4 py-2">
+        <details class="text-sm">
+            <summary class="text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700">
+                ⚙️ Instructions (click to customize)
+            </summary>
+            <div class="mt-2">
+                <textarea id="instructions-{{ thread.thread_id }}" 
+                          rows="6"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 thread-instructions"
+                          placeholder="Instructions for the LLM..."
+                          data-custom="{{ 'true' if has_custom_instructions else 'false' }}"
+                          onblur="saveThreadInstructions('{{ session_id }}', '{{ thread.thread_id }}', this.value)">{{ thread_instructions }}</textarea>
+                <p class="mt-1 text-xs text-gray-500">
+                    {% if has_custom_instructions %}
+                    <span class="text-blue-600">✓ Custom instructions for this thread</span>
+                    {% else %}
+                    Using session defaults. Edit to customize for this thread.
+                    {% endif %}
+                </p>
+            </div>
+        </details>
+    </div>
+    
+    <!-- Attachments Section -->
+    <div class="border-t border-gray-200 px-4 py-2">
+        <details class="text-sm" open>
+            <summary class="text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700">
+                📎 Attachments {% if attachments %}({{ attachments|length }}){% endif %}
+            </summary>
+            <div class="mt-2 space-y-2">
+                <!-- Existing Attachments -->
+                {% if attachments %}
+                {% for attachment in attachments %}
+                <div class="flex items-center justify-between p-2 bg-gray-50 rounded border border-gray-200">
+                    <div class="flex items-center space-x-2 flex-1 min-w-0">
+                        <span class="flex-shrink-0">
+                            {% if attachment.file_type == 'pdf' %}📄{% elif attachment.file_type == 'xlsx' or attachment.file_type == 'csv' %}📊{% elif attachment.file_type == 'docx' %}📝{% else %}📁{% endif %}
+                        </span>
+                        <span class="text-sm text-gray-700 truncate" title="{{ attachment.filename }}">{{ attachment.filename }}</span>
+                        {% if attachment.file_type == 'pdf' %}
+                        <span class="text-xs text-gray-500">(pages {{ attachment.pages_str }}, ~{{ attachment.token_estimate|default('?') }} tok)</span>
+                        {% elif attachment.file_type in ['xlsx', 'xls', 'csv'] %}
+                        <span class="text-xs text-gray-500">({{ attachment.sheet_count|default(1) }} sheet{% if attachment.sheet_count|default(1) != 1 %}s{% endif %}, {{ attachment.total_rows|default('?') }} rows, ~{{ attachment.token_estimate|default('?') }} tok)</span>
+                        {% elif attachment.file_type == 'docx' %}
+                        <span class="text-xs text-gray-500">({{ attachment.paragraph_count|default('?') }} para{% if attachment.paragraph_count|default(0) != 1 %}s{% endif %}{% if attachment.table_count|default(0) > 0 %}, {{ attachment.table_count }} table{% if attachment.table_count != 1 %}s{% endif %}{% endif %}, ~{{ attachment.token_estimate|default('?') }} tok)</span>
+                        {% else %}
+                        <span class="text-xs text-gray-500">(~{{ attachment.token_estimate|default('?') }} tok)</span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        {% if attachment.file_type == 'pdf' %}
+                        <!-- Page Selection for PDF -->
+                        <form hx-post="/update_attachment_pages/{{ session_id }}/{{ thread.thread_id }}/{{ attachment.id }}"
+                              hx-target="#card-{{ thread.thread_id }}"
+                              hx-swap="outerHTML"
+                              class="flex items-center space-x-1">
+                            <input type="text" 
+                                   name="pages" 
+                                   value="{{ attachment.pages_str }}" 
+                                   class="w-20 px-2 py-0.5 text-xs border {% if attachment.error %}border-red-400{% else %}border-gray-300{% endif %} rounded focus:ring-1 focus:ring-blue-500"
+                                   placeholder="e.g., 1-10"
+                                   title="Page range (e.g., 1-10 or 1,3,5-8). PDF has {{ attachment.total_pages }} pages.">
+                            <button type="submit" class="px-1.5 py-0.5 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200">
+                                Update
+                            </button>
+                            <span class="text-xs text-gray-400">/{{ attachment.total_pages }}pp</span>
+                        </form>
+                        {% if attachment.error %}
+                        <span class="text-xs text-red-500 ml-1" title="{{ attachment.error }}">⚠️ {{ attachment.error }}</span>
+                        {% endif %}
+                        {% endif %}
+                        {% if attachment.file_type in ['xlsx', 'xls', 'csv'] and attachment.error %}
+                        <span class="text-xs text-red-500 ml-1" title="{{ attachment.error }}">⚠️ {{ attachment.error }}</span>
+                        {% endif %}
+                        {% if attachment.file_type == 'docx' and attachment.error %}
+                        <span class="text-xs text-red-500 ml-1" title="{{ attachment.error }}">⚠️ {{ attachment.error }}</span>
+                        {% endif %}
+                        <!-- Remove Attachment -->
+                        <button hx-post="/remove_attachment/{{ session_id }}/{{ thread.thread_id }}/{{ attachment.id }}"
+                                hx-target="#card-{{ thread.thread_id }}"
+                                hx-swap="outerHTML"
+                                hx-confirm="Remove this attachment?"
+                                class="text-gray-400 hover:text-red-500 transition">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+                
+                <!-- Add Attachment (drag & drop zone) -->
+                <form id="attachment-form-{{ thread.thread_id }}"
+                      hx-post="/add_attachment/{{ session_id }}/{{ thread.thread_id }}"
+                      hx-target="#card-{{ thread.thread_id }}"
+                      hx-swap="outerHTML"
+                      hx-encoding="multipart/form-data"
+                      hx-indicator="#attachment-loading-{{ thread.thread_id }}">
+                    <div id="dropzone-{{ thread.thread_id }}" 
+                         class="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center hover:border-blue-400 transition-colors cursor-pointer"
+                         ondragover="event.preventDefault(); this.classList.add('border-blue-500', 'bg-blue-50');"
+                         ondragleave="this.classList.remove('border-blue-500', 'bg-blue-50');"
+                         ondrop="event.preventDefault(); this.classList.remove('border-blue-500', 'bg-blue-50'); var input = document.getElementById('attachment-input-{{ thread.thread_id }}'); input.files = event.dataTransfer.files; htmx.trigger(input.closest('form'), 'submit');"
+                         onclick="document.getElementById('attachment-input-{{ thread.thread_id }}').click();">
+                        <input type="file" 
+                               name="file" 
+                               id="attachment-input-{{ thread.thread_id }}"
+                               accept=".pdf,.xlsx,.xls,.csv,.docx"
+                               onchange="htmx.trigger(this.closest('form'), 'submit');"
+                               class="hidden">
+                        <span class="text-gray-500 text-xs">📎 Drag & drop or <span class="text-blue-600 underline">click to select</span></span>
+                        <span id="attachment-loading-{{ thread.thread_id }}" class="htmx-indicator text-xs text-blue-600 ml-2">
+                            ⏳ Uploading...
+                        </span>
+                    </div>
+                </form>
+                <p class="text-xs text-gray-400 mt-1">Supported: PDF, XLSX, CSV, DOCX</p>
+            </div>
+        </details>
+    </div>
+    
+    <!-- Chat with AI (collapsible) -->
+    <div class="border-t border-gray-200 px-4 py-2">
+        <details class="text-sm" {% if chat_history and chat_history|length > 0 %}open{% endif %}>
+            <summary class="text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700">
+                💬 Chat with AI {% if chat_history and chat_history|length > 0 %}({{ chat_history|length }} message{% if chat_history|length != 1 %}s{% endif %}){% endif %}
+            </summary>
+            <div class="mt-2">
+                <!-- Chat Messages (scrollable) -->
+                <div id="chat-messages-{{ thread.thread_id }}" 
+                     class="max-h-64 overflow-y-auto mb-3 space-y-2 {% if chat_history and chat_history|length > 0 %}p-2 bg-gray-50 rounded border border-gray-200{% endif %}">
+                    {% if chat_history and chat_history|length > 0 %}
+                        {% for msg in chat_history %}
+                        {% if msg.role != 'system' %}
+                        <div class="flex {% if msg.role == 'user' %}justify-end{% else %}justify-start{% endif %}">
+                            <div class="max-w-[85%] rounded-lg px-3 py-2 text-sm shadow-sm
+                                        {% if msg.role == 'user' %}bg-blue-600 text-white{% else %}bg-white border border-gray-200 text-gray-700{% endif %}">
+                                <div class="whitespace-pre-wrap">{{ msg.content }}</div>
+                                {% if msg.revision_updated or msg.reply_updated %}
+                                <div class="mt-2 pt-2 border-t {% if msg.role == 'user' %}border-blue-400{% else %}border-gray-200{% endif %}">
+                                    {% if msg.revision_updated %}
+                                    <span class="text-xs {% if msg.role == 'user' %}text-blue-200{% else %}text-green-600{% endif %}">
+                                        ✏️ Revision updated
+                                    </span>
+                                    {% endif %}
+                                    {% if msg.reply_updated %}
+                                    <span class="text-xs {% if msg.role == 'user' %}text-blue-200{% else %}text-green-600{% endif %} {% if msg.revision_updated %}ml-2{% endif %}">
+                                        ✏️ Reply updated
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-xs text-gray-400 italic">No messages yet. Use chat to refine the suggestion or provide guidance before generating.</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Chat Input -->
+                <form hx-post="/chat/{{ session_id }}/{{ thread.thread_id }}"
+                      hx-target="#card-{{ thread.thread_id }}"
+                      hx-swap="outerHTML"
+                      hx-indicator="#chat-loading-{{ thread.thread_id }}"
+                      hx-vals="js:{provider: localStorage.getItem('llm_provider') || 'openai', model: (localStorage.getItem('llm_provider') === 'ollama' ? localStorage.getItem('ollama_model') : localStorage.getItem('openai_model')) || 'gpt-5-mini', api_key: localStorage.getItem('openai_api_key') || '', ollama_url: localStorage.getItem('ollama_url') || ''}"
+                      class="flex space-x-2"
+                      id="chat-form-{{ thread.thread_id }}">
+                    <textarea id="chat-input-{{ thread.thread_id }}"
+                              name="message"
+                              rows="2"
+                              placeholder="{% if suggestion %}Describe how you'd like the revision changed...{% else %}Provide guidance before generating, or just click Generate...{% endif %}"
+                              class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm 
+                                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              onkeydown="handleChatKeydown(event, '{{ thread.thread_id }}')"></textarea>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg 
+                                   hover:bg-blue-700 transition self-end">
+                        Send
+                    </button>
+                </form>
+                
+                <!-- Loading indicator -->
+                <div id="chat-loading-{{ thread.thread_id }}" class="htmx-indicator mt-2">
+                    <div class="flex items-center space-x-2 text-sm text-gray-500">
+                        <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>🤖 Thinking...</span>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </div>
+    
+    <!-- Action Bar -->
+    <div class="border-t border-gray-200 bg-gray-50 px-4 py-3">
+        <div class="flex items-center justify-center space-x-3">
+            {% set status_val = thread_status.value if thread_status.value is defined else thread_status %}
+            {% if status_val == 'pending' and not suggestion %}
+            <!-- No suggestion yet - show Generate with token counter -->
+            <div class="flex items-center space-x-3">
+                <button hx-post="/generate/{{ session_id }}/{{ thread.thread_id }}"
+                        hx-target="#card-{{ thread.thread_id }}"
+                        hx-swap="outerHTML"
+                        hx-indicator="#loading-overlay"
+                        hx-vals="js:{provider: localStorage.getItem('llm_provider') || 'openai', model: (localStorage.getItem('llm_provider') === 'ollama' ? localStorage.getItem('ollama_model') : localStorage.getItem('openai_model')) || 'gpt-5-mini', api_key: localStorage.getItem('openai_api_key') || '', ollama_url: localStorage.getItem('ollama_url') || ''}"
+                        class="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
+                    🤖 Generate Suggestion
+                </button>
+                <!-- Token Counter (loads via HTMX on page load) -->
+                <span id="token-count-{{ thread.thread_id }}" 
+                      class="text-xs text-gray-500"
+                      hx-get="/token-count/{{ session_id }}/{{ thread.thread_id }}"
+                      hx-trigger="load, contextUpdate from:body"
+                      hx-swap="innerHTML">
+                    📊 ...
+                </span>
+            </div>
+            <button hx-post="/skip/{{ session_id }}/{{ thread.thread_id }}"
+                    hx-target="#card-{{ thread.thread_id }}"
+                    hx-swap="outerHTML"
+                    class="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 transition">
+                Skip
+            </button>
+            {% elif status_val == 'pending' and suggestion %}
+            <!-- Has suggestion, not yet accepted - show Accept/Regenerate/Skip -->
+            <button hx-post="/accept/{{ session_id }}/{{ thread.thread_id }}"
+                    hx-target="#card-{{ thread.thread_id }}"
+                    hx-swap="outerHTML"
+                    class="px-4 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition">
+                ✓ Accept
+            </button>
+            <button hx-post="/regenerate/{{ session_id }}/{{ thread.thread_id }}"
+                    hx-target="#card-{{ thread.thread_id }}"
+                    hx-swap="outerHTML"
+                    hx-indicator="#loading-overlay"
+                    hx-vals="js:{provider: localStorage.getItem('llm_provider') || 'openai', model: (localStorage.getItem('llm_provider') === 'ollama' ? localStorage.getItem('ollama_model') : localStorage.getItem('openai_model')) || 'gpt-5-mini', api_key: localStorage.getItem('openai_api_key') || '', ollama_url: localStorage.getItem('ollama_url') || ''}"
+                    class="px-4 py-1.5 bg-blue-500 text-white text-sm font-medium rounded hover:bg-blue-600 transition">
+                🔄 Regenerate
+            </button>
+            <button hx-post="/skip/{{ session_id }}/{{ thread.thread_id }}"
+                    hx-target="#card-{{ thread.thread_id }}"
+                    hx-swap="outerHTML"
+                    class="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 transition">
+                Skip
+            </button>
+            {% elif status_val == 'accepted' %}
+            <!-- Already accepted -->
+            <span class="text-green-600 text-sm font-medium">✓ Accepted</span>
+            <button hx-post="/regenerate/{{ session_id }}/{{ thread.thread_id }}"
+                    hx-target="#card-{{ thread.thread_id }}"
+                    hx-swap="outerHTML"
+                    hx-indicator="#loading-overlay"
+                    hx-vals="js:{provider: localStorage.getItem('llm_provider') || 'openai', model: (localStorage.getItem('llm_provider') === 'ollama' ? localStorage.getItem('ollama_model') : localStorage.getItem('openai_model')) || 'gpt-5-mini', api_key: localStorage.getItem('openai_api_key') || '', ollama_url: localStorage.getItem('ollama_url') || ''}"
+                    class="px-4 py-1.5 bg-gray-200 text-gray-700 text-sm font-medium rounded hover:bg-gray-300 transition">
+                Undo & Regenerate
+            </button>
+            {% elif status_val == 'skipped' %}
+            <!-- Skipped -->
+            <span class="text-gray-500 text-sm">Skipped</span>
+            <button hx-post="/generate/{{ session_id }}/{{ thread.thread_id }}"
+                    hx-target="#card-{{ thread.thread_id }}"
+                    hx-swap="outerHTML"
+                    hx-indicator="#loading-overlay"
+                    hx-vals="js:{provider: localStorage.getItem('llm_provider') || 'openai', model: (localStorage.getItem('llm_provider') === 'ollama' ? localStorage.getItem('ollama_model') : localStorage.getItem('openai_model')) || 'gpt-5-mini', api_key: localStorage.getItem('openai_api_key') || '', ollama_url: localStorage.getItem('ollama_url') || ''}"
+                    class="px-4 py-1.5 bg-blue-500 text-white text-sm font-medium rounded hover:bg-blue-600 transition">
+                Generate Instead
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Suggestion Section (shown after generation) -->
+    {% if suggestion %}
+    <div class="border-t border-gray-200">
+        <div class="flex">
+            <!-- LEFT: Revised Text - Unified Editor with Diff -->
+            <div class="w-3/5 border-r border-gray-100 p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Revised Text</span>
+                </div>
+                
+                {% if is_table_row %}
+                {# Table row - keep existing table diff view (tables are complex) #}
+                <div id="diff-view-{{ thread.thread_id }}" class="p-3 bg-white border border-gray-200 rounded overflow-x-auto">
+                    <div id="diff-content-{{ thread.thread_id }}">
+                        {% if diff_table_cells %}
+                        <table class="border-collapse text-xs text-slate-700 min-w-full">
+                            {% for row in diff_table_cells %}
+                            <tr class="{% if row[0].deleted %}opacity-60{% endif %}">
+                                {% for cell in row %}
+                                <td class="border border-gray-300 px-2 py-1.5 whitespace-nowrap
+                                           {% if cell.added %}bg-green-50{% elif cell.deleted %}bg-red-50{% elif cell.changed %}bg-yellow-50{% else %}bg-white{% endif %}">
+                                    {{ cell.html | safe }}
+                                </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </table>
+                        {% elif diff_html_rows %}
+                            {# Fallback to row-level diff #}
+                            <div class="space-y-1">
+                            {% for row_html in diff_html_rows %}
+                            <div class="whitespace-nowrap">{{ row_html | safe }}</div>
+                            {% endfor %}
+                            </div>
+                        {% elif suggestion %}
+                            {% for row in suggestion.revised_text.split('\n') %}
+                            <div class="whitespace-nowrap">{{ row }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Table row edit - keep simple textarea for now -->
+                <details class="mt-2">
+                    <summary class="text-xs text-gray-500 cursor-pointer hover:text-gray-700">Edit table text</summary>
+                    <textarea id="revised-text-{{ thread.thread_id }}"
+                              class="w-full mt-1 p-2 text-xs border border-gray-200 rounded font-mono"
+                              rows="3"
+                              data-thread-id="{{ thread.thread_id }}"
+                              data-session-id="{{ session_id }}"
+                              onblur="saveRevisedTextPlain('{{ thread.thread_id }}', '{{ session_id }}')">{{ suggestion.revised_text }}</textarea>
+                </details>
+                {% else %}
+                {# Regular text - TIPTAP EDITOR with inline diff + formatting #}
+                <!-- Formatting Toolbar: onmousedown + preventDefault + tabindex=-1 so focus stays in editor and selection is preserved -->
+                <div class="flex items-center gap-1 p-1 bg-gray-50 border border-gray-200 rounded-t">
+                    <button type="button" tabindex="-1"
+                            onmousedown="event.preventDefault();"
+                            onclick="window.formatTipTapText && window.formatTipTapText('{{ thread.thread_id }}', 'bold')"
+                            class="format-btn px-2 py-1 text-sm font-bold bg-white border border-gray-300 rounded hover:bg-gray-100 focus:ring-2 focus:ring-blue-500"
+                            data-shortcut="B">
+                        B
+                    </button>
+                    <button type="button" tabindex="-1"
+                            onmousedown="event.preventDefault();"
+                            onclick="window.formatTipTapText && window.formatTipTapText('{{ thread.thread_id }}', 'italic')"
+                            class="format-btn px-2 py-1 text-sm italic bg-white border border-gray-300 rounded hover:bg-gray-100 focus:ring-2 focus:ring-blue-500"
+                            data-shortcut="I">
+                        I
+                    </button>
+                    <button type="button" tabindex="-1"
+                            onmousedown="event.preventDefault();"
+                            onclick="window.formatTipTapText && window.formatTipTapText('{{ thread.thread_id }}', 'underline')"
+                            class="format-btn px-2 py-1 text-sm underline bg-white border border-gray-300 rounded hover:bg-gray-100 focus:ring-2 focus:ring-blue-500"
+                            data-shortcut="U">
+                        U
+                    </button>
+                    <span class="w-px h-5 bg-gray-300 mx-1"></span>
+                    <button type="button" tabindex="-1"
+                            onmousedown="event.preventDefault();"
+                            onclick="window.formatTipTapText && window.formatTipTapText('{{ thread.thread_id }}', 'superscript')"
+                            class="format-btn px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-100 focus:ring-2 focus:ring-blue-500"
+                            title="Superscript">
+                        x<sup class="text-xs">2</sup>
+                    </button>
+                    <button type="button" tabindex="-1"
+                            onmousedown="event.preventDefault();"
+                            onclick="window.formatTipTapText && window.formatTipTapText('{{ thread.thread_id }}', 'subscript')"
+                            class="format-btn px-2 py-1 text-sm bg-white border border-gray-300 rounded hover:bg-gray-100 focus:ring-2 focus:ring-blue-500"
+                            title="Subscript">
+                        x<sub class="text-xs">2</sub>
+                    </button>
+                </div>
+                <!-- TipTap Rich Text Editor Container -->
+                <div id="tiptap-editor-{{ thread.thread_id }}"
+                     class="tiptap-editor-container w-full min-h-[150px] bg-white border border-gray-200 border-t-0 rounded-b text-sm leading-relaxed focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 overflow-auto"
+                     data-thread-id="{{ thread.thread_id }}"
+                     data-session-id="{{ session_id }}"
+                     data-initial-content="{{ (editable_diff_html if editable_diff_html else (suggestion.revised_text_html if suggestion.revised_text_html else suggestion.revised_text)) | e }}">
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- RIGHT: Response + Rationale -->
+            <div class="w-2/5 p-4 bg-green-50/30">
+                <div class="mb-2">
+                    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Response to Reviewer</span>
+                </div>
+                <textarea id="response-text-{{ thread.thread_id }}"
+                          name="response"
+                          rows="4"
+                          class="w-full p-3 bg-white border border-gray-200 rounded text-sm leading-relaxed resize-y focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
+                          hx-post="/update_suggestion/{{ session_id }}/{{ thread.thread_id }}"
+                          hx-trigger="change delay:500ms, blur changed"
+                          hx-swap="none">{{ suggestion.response }}</textarea>
+                
+                <!-- Rationale (collapsible) -->
+                <details class="text-sm">
+                    <summary class="text-xs font-medium text-gray-500 uppercase tracking-wide cursor-pointer hover:text-gray-700">
+                        Rationale
+                    </summary>
+                    <div class="mt-2 p-3 bg-white border border-gray-200 rounded text-gray-600 leading-relaxed">
+                        {{ suggestion.rationale }}
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Detect platform once for keyboard shortcut tooltips
+    if (window._modKey === undefined) {
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0 || 
+                      navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+        window._modKey = isMac ? '⌘' : 'Ctrl+';
+    }
+    
+    // Set tooltips for this card's buttons (runs per card since cards load dynamically)
+    (function() {
+        const card = document.getElementById('card-{{ thread.thread_id }}');
+        if (card) {
+            card.querySelectorAll('[data-shortcut]').forEach(btn => {
+                const key = btn.dataset.shortcut;
+                btn.title = `${btn.textContent.trim()} (${window._modKey}${key})`;
+            });
+        }
+    })();
+    
+    // Initialize TipTap editor for this card
+    (function initTipTapForCard() {
+        const threadId = '{{ thread.thread_id }}';
+        const sessionId = '{{ session_id }}';
+        const container = document.getElementById('tiptap-editor-' + threadId);
+        
+        if (!container) return; // No editor container (e.g., table row or no suggestion)
+        
+        // Get initial content from data attribute (HTML-escaped, need to unescape)
+        const initialContent = container.dataset.initialContent || '';
+        
+        // Function to create the editor
+        function createEditor() {
+            if (window.createTipTapEditor) {
+                window.createTipTapEditor(threadId, sessionId, initialContent);
+            } else {
+                console.warn('TipTap not ready yet for thread', threadId);
+            }
+        }
+        
+        // Check if TipTap is already loaded
+        if (window.tiptapReady) {
+            createEditor();
+        } else {
+            // Wait for TipTap to load
+            window.addEventListener('tiptap-ready', createEditor, { once: true });
+        }
+    })();
+    
+    // Save plain text for table rows (still uses textarea)
+    function saveRevisedTextPlain(threadId, sessionId) {
+        const textarea = document.getElementById('revised-text-' + threadId);
+        if (!textarea) return;
+        
+        const formData = new FormData();
+        formData.append('revised_text', textarea.value);
+        
+        fetch('/update_suggestion/' + sessionId + '/' + threadId, {
+            method: 'POST',
+            body: formData
+        }).catch(err => console.error('Auto-save failed:', err));
+    }
+    
+    // Note: Keyboard shortcuts for formatting (Cmd/Ctrl+B, I, U) are handled
+    // automatically by TipTap's built-in Bold, Italic, and Underline extensions
+    </script>
+    {% endif %}
+    
+    <script>
+    // Chat keyboard shortcuts: Enter to send (Shift+Enter for newline)
+    function handleChatKeydown(event, threadId) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            const form = document.getElementById('chat-form-' + threadId);
+            const textarea = document.getElementById('chat-input-' + threadId);
+            if (form && textarea && textarea.value.trim()) {
+                htmx.trigger(form, 'submit');
+            }
+        }
+    }
+    
+    // Auto-scroll chat messages to bottom when card is loaded/updated
+    (function() {
+        const chatMessages = document.getElementById('chat-messages-{{ thread.thread_id }}');
+        if (chatMessages) {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Restore any saved chat draft for this thread (only if NOT from a chat submission)
+        const draftKey = 'chat_draft_{{ thread.thread_id }}';
+        const chatSubmittedKey = 'chat_submitted_{{ thread.thread_id }}';
+        const chatInput = document.getElementById('chat-input-{{ thread.thread_id }}');
+        
+        if (chatInput) {
+            // Check if this reload is after a chat submission - if so, don't restore draft
+            const wasSubmitted = localStorage.getItem(chatSubmittedKey);
+            if (wasSubmitted) {
+                // Clear both flags - the message was sent successfully
+                localStorage.removeItem(chatSubmittedKey);
+                localStorage.removeItem(draftKey);
+            } else {
+                // Restore draft if available (for context expansion, etc.)
+                const savedDraft = localStorage.getItem(draftKey);
+                if (savedDraft) {
+                    chatInput.value = savedDraft;
+                    localStorage.removeItem(draftKey);
+                }
+            }
+            
+            // Save draft before card is swapped (triggered by HTMX)
+            const card = document.getElementById('card-{{ thread.thread_id }}');
+            if (card) {
+                card.addEventListener('htmx:beforeSwap', function(event) {
+                    const input = document.getElementById('chat-input-{{ thread.thread_id }}');
+                    if (input && input.value.trim()) {
+                        localStorage.setItem(draftKey, input.value);
+                    }
+                });
+            }
+            
+            // Mark when chat form is submitted
+            const chatForm = document.getElementById('chat-form-{{ thread.thread_id }}');
+            if (chatForm) {
+                chatForm.addEventListener('htmx:beforeRequest', function(event) {
+                    // Set flag that chat was submitted (to prevent draft restoration)
+                    localStorage.setItem(chatSubmittedKey, 'true');
+                });
+            }
+        }
+    })();
+    </script>
+    
+</div>

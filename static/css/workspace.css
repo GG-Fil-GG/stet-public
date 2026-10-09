@@ -1,0 +1,284 @@
+/* Workspace UI shell (Stage 1, Milestone 5).
+   Tailwind (CDN) covers layout; this file holds document-render and tree styling
+   that's clumsy as utility classes, reusing the card UI's diff/highlight colors. */
+
+/* ---- File tree ---- */
+.ws-tree-folder > .ws-tree-label {
+    font-weight: 600;
+    color: #475569;
+}
+.ws-tree-label {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ws-tree-label:hover {
+    background: #f1f5f9;
+}
+.ws-tree-file.is-active > .ws-tree-label {
+    background: #d1fae5;
+    color: #065f46;
+}
+.ws-tree-file[data-openable="false"] > .ws-tree-label {
+    color: #94a3b8;
+    cursor: default;
+}
+.ws-tree-children {
+    margin-left: 0.85rem;
+    border-left: 1px solid #e2e8f0;
+    padding-left: 0.25rem;
+}
+
+/* ---- Document viewer (read fidelity, M6a) ---- */
+/* Centre layout: the document "page" plus a right-hand comments rail. */
+.ws-doc-layout {
+    display: flex;
+    gap: 1rem;
+    max-width: 64rem;
+    align-items: flex-start;
+}
+.ws-page { flex: 1 1 auto; min-width: 0; }
+
+.ws-doc p {
+    margin: 0 0 0.85rem 0;
+    line-height: 1.6;
+}
+/* Each paragraph/table row is its own block (fixes M5 run-on lines). */
+.ws-doc .ws-para {
+    margin: 0 0 0.7rem 0;
+    line-height: 1.6;
+    min-height: 1.2em;       /* preserve empty paragraphs as blank lines */
+    white-space: normal;
+}
+.ws-doc b, .ws-doc strong { font-weight: 700; }
+.ws-doc em, .ws-doc i { font-style: italic; }
+.ws-doc u { text-decoration: underline; }
+.ws-doc sup { vertical-align: super; font-size: smaller; }
+.ws-doc sub { vertical-align: sub; font-size: smaller; }
+
+/* Track changes — reuse the card UI's diff colour language. */
+.ws-doc mark { background: #fef08a; padding: 0 2px; border-radius: 2px; }
+.ws-doc ins.diff-insert, .ws-doc .diff-ins, .ws-doc .diff-insert {
+    color: #166534; background: #dcfce7; text-decoration: none;
+}
+.ws-doc del.diff-delete, .ws-doc .diff-del, .ws-doc .diff-delete {
+    color: #b91c1c; background: #fee2e2; text-decoration: line-through;
+}
+
+/* Anchored comment ranges. */
+.ws-doc .ws-comment-ref {
+    background: #fff3bf;
+    border-bottom: 2px solid #f59f00;
+    cursor: pointer;
+    border-radius: 1px;
+}
+.ws-doc .ws-comment-ref:hover { background: #ffe8a3; }
+.ws-doc .ws-comment-ref.is-resolved {
+    background: transparent;
+    border-bottom: 1px dotted #adb5bd;
+}
+
+/* Tables rendered as legible rows (not a true grid — that's Stage 3). */
+.ws-doc .ws-table-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    border: 1px solid #e2e8f0;
+    border-bottom: none;
+    margin: 0;
+    min-height: 0;
+}
+.ws-doc .ws-table-row:last-of-type { border-bottom: 1px solid #e2e8f0; }
+.ws-doc .ws-table-row + :not(.ws-table-row) { margin-top: 0.7rem; }
+.ws-doc .ws-cell {
+    flex: 1 1 0;
+    min-width: 6rem;
+    padding: 0.3rem 0.5rem;
+    border-right: 1px solid #e2e8f0;
+}
+.ws-doc .ws-cell:last-child { border-right: none; }
+
+/* ---- Comments rail (side list) ---- */
+.ws-comments {
+    flex: 0 0 16rem;
+    width: 16rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.ws-comment-card {
+    background: #fffdf5;
+    border: 1px solid #f1e3b0;
+    border-left: 3px solid #f59f00;
+    border-radius: 0.4rem;
+    padding: 0.55rem 0.65rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+}
+.ws-comment-card:hover { box-shadow: 0 1px 6px rgba(0, 0, 0, 0.08); }
+.ws-comment-card.is-resolved {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+    border-left-color: #cbd5e1;
+    opacity: 0.8;
+}
+.ws-comment-head { margin-bottom: 0.25rem; }
+.ws-comment-status { font-size: 0.68rem; font-weight: 600; color: #b45309; }
+.ws-comment-card.is-resolved .ws-comment-status { color: #64748b; }
+.ws-comment-quote {
+    font-style: italic;
+    color: #64748b;
+    border-left: 2px solid #e2e8f0;
+    padding-left: 0.4rem;
+    margin-bottom: 0.4rem;
+}
+.ws-comment-entry { margin-top: 0.35rem; }
+.ws-comment-entry.is-reply { margin-left: 0.7rem; }
+.ws-comment-author { font-weight: 600; color: #334155; }
+.ws-comment-text { color: #475569; white-space: pre-wrap; }
+
+/* Flash highlight when click-linking anchor ↔ comment. */
+.ws-flash { animation: ws-flash-kf 1.2s ease-out; }
+@keyframes ws-flash-kf {
+    0% { background: #fde68a; }
+    100% { background: transparent; }
+}
+.ws-comment-card.ws-flash { animation: ws-flash-card-kf 1.2s ease-out; }
+@keyframes ws-flash-card-kf {
+    0% { box-shadow: 0 0 0 3px #f59f00; }
+    100% { box-shadow: none; }
+}
+
+/* ---- Paragraph edit (M6b) ---- */
+.ws-para { position: relative; }
+.ws-para-actions {
+    position: absolute;
+    top: 0.15rem;
+    right: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+.ws-para:hover .ws-para-actions { opacity: 1; }
+.ws-para.is-editing .ws-para-actions { display: none; }
+.ws-edit-btn {
+    font-size: 0.68rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 0.25rem;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+    cursor: pointer;
+}
+.ws-edit-btn:hover { background: #f1f5f9; border-color: #94a3b8; }
+.ws-para-content { min-height: 0.5rem; }
+.ws-doc-editor {
+    border: 1px solid #93c5fd;
+    border-radius: 0.375rem;
+    background: #f8fafc;
+    overflow: hidden;
+}
+.ws-doc-editor-toolbar {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.35rem 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+}
+.ws-doc-editor-toolbar button {
+    font-size: 0.75rem;
+    min-width: 1.75rem;
+    padding: 0.2rem 0.35rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    background: #fff;
+    color: #334155;
+    cursor: pointer;
+}
+.ws-doc-editor-toolbar button:hover { background: #f1f5f9; }
+.ws-doc-editor-body { background: #fff; }
+.ws-doc-editor-prose p { margin: 0.25rem 0; }
+.ws-doc-editor-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border-top: 1px solid #e2e8f0;
+    background: #fff;
+}
+.ws-doc-editor-actions button {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+.ws-editor-cancel {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #475569;
+}
+.ws-editor-save {
+    border: 1px solid #2563eb;
+    background: #2563eb;
+    color: #fff;
+}
+.ws-editor-save:hover { background: #1d4ed8; }
+
+/* ---- Chat ---- */
+.ws-msg-user {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.65rem;
+}
+.ws-msg-agent {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.65rem;
+}
+.ws-msg-steps {
+    margin-top: 0.4rem;
+    font-size: 0.72rem;
+    color: #64748b;
+}
+.ws-msg-step { display: flex; gap: 0.3rem; align-items: baseline; }
+.ws-msg-step .ok { color: #16a34a; }
+.ws-msg-step .err { color: #dc2626; }
+.ws-msg-steps.hidden { display: none; }
+.ws-msg-banner {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.5rem;
+    border-radius: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+.ws-msg-banner-stopped { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.ws-msg-banner-max_steps { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.ws-msg-banner-cancelled { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+.ws-chat-header { min-height: 2.25rem; }
+.ws-chat-toolbar button:disabled { opacity: 0.4; cursor: not-allowed; }
+.ws-step-link {
+    margin-left: 0.35rem;
+    font-size: 0.68rem;
+    color: #2563eb;
+    text-decoration: underline;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+}
+.ws-step-link:hover { color: #1d4ed8; }
+.ws-step-code { margin-left: 0.25rem; color: #94a3b8; font-size: 0.68rem; }
+.ws-confirm {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 0.5rem;
+    padding: 0.6rem;
+}

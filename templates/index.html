@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Upload Document{% endblock %}
+
+{% block content %}
+<!-- Full-page dropzone wrapper -->
+<div id="page-dropzone" class="min-h-[calc(100vh-120px)] flex flex-col">
+    
+    <!-- Thread Container (populated after upload) -->
+    <section id="thread-container" class="flex-1">
+        <!-- Welcome/Upload screen shown before upload -->
+        <div id="upload-screen" class="flex flex-col items-center justify-center min-h-[calc(100vh-120px)] text-center px-4">
+            <div class="mb-8">
+                <span class="text-6xl mb-4 block">📝</span>
+                <h2 class="text-2xl font-semibold text-gray-800 mb-2">Welcome to Stet</h2>
+                <p class="text-gray-500 max-w-md">Upload a Word document with comments to get started. The AI will suggest revisions and responses for each comment.</p>
+            </div>
+            
+            <form id="upload-form"
+                  hx-post="/upload"
+                  hx-target="#thread-container"
+                  hx-swap="innerHTML"
+                  hx-encoding="multipart/form-data"
+                  hx-indicator="#loading-overlay">
+                
+                <label for="file-input" 
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition cursor-pointer shadow-sm">
+                    <span class="mr-2">📤</span>
+                    Upload Document
+                </label>
+                <input id="file-input" 
+                       type="file" 
+                       name="file" 
+                       accept=".docx"
+                       class="sr-only"
+                       onchange="autoSubmit(this)">
+            </form>
+            
+            <p class="mt-4 text-sm text-gray-400">DOCX files only • Or drag and drop anywhere</p>
+        </div>
+    </section>
+    
+</div>
+
+<!-- Drag overlay (shown when dragging) - only visible on upload screen -->
+<div id="drag-overlay" class="hidden fixed top-[60px] left-0 right-0 bottom-0 bg-blue-500 bg-opacity-10 border-2 border-dashed border-blue-400 z-40 pointer-events-none m-4 rounded-lg">
+    <div class="flex items-center justify-center h-full">
+        <div class="bg-white rounded-lg shadow-lg px-8 py-6 text-center">
+            <span class="text-4xl mb-2 block">📄</span>
+            <p class="text-lg font-medium text-blue-600">Drop document here</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Auto-submit when file is selected
+    function autoSubmit(input) {
+        if (input.files && input.files[0]) {
+            const fileName = input.files[0].name.toLowerCase();
+            if (fileName.endsWith('.docx')) {
+                // Trigger HTMX form submission
+                htmx.trigger(document.getElementById('upload-form'), 'submit');
+            } else {
+                alert('Please select a .docx file');
+                input.value = '';
+            }
+        }
+    }
+    
+    // Check if document is loaded (thread_list replaces upload-screen)
+    function isDocumentLoaded() {
+        return document.getElementById('document-loaded') !== null;
+    }
+    
+    // Full-page drag and drop support (only active on upload screen)
+    const pageDropzone = document.getElementById('page-dropzone');
+    const dragOverlay = document.getElementById('drag-overlay');
+    const fileInput = document.getElementById('file-input');
+    let dragCounter = 0;
+    
+    // Prevent default drag behaviors on entire document
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, e => e.preventDefault());
+    });
+    
+    // Show overlay when dragging over page (only if no document loaded)
+    document.addEventListener('dragenter', function(e) {
+        if (isDocumentLoaded()) return; // Don't show overlay if document is loaded
+        dragCounter++;
+        if (dragCounter === 1) {
+            dragOverlay.classList.remove('hidden');
+        }
+    });
+    
+    document.addEventListener('dragleave', function(e) {
+        dragCounter--;
+        if (dragCounter === 0) {
+            dragOverlay.classList.add('hidden');
+        }
+    });
+    
+    document.addEventListener('drop', function(e) {
+        dragCounter = 0;
+        dragOverlay.classList.add('hidden');
+        
+        if (isDocumentLoaded()) return; // Don't handle drop if document is loaded
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            const fileName = files[0].name.toLowerCase();
+            if (fileName.endsWith('.docx')) {
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(files[0]);
+                fileInput.files = dataTransfer.files;
+                autoSubmit(fileInput);
+            } else {
+                alert('Please select a .docx file');
+            }
+        }
+    });
+</script>
+{% endblock %}

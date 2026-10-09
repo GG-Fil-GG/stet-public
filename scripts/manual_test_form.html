@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stet Manual Test Observations</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4f46e5;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        input[type="text"],
+        input[type="number"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        .rating-group {
+            display: flex;
+            gap: 10px;
+        }
+        .rating-group label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        button {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #4338ca;
+        }
+        button.secondary {
+            background: #6b7280;
+        }
+        button.secondary:hover {
+            background: #4b5563;
+        }
+        button.danger {
+            background: #dc2626;
+        }
+        button.danger:hover {
+            background: #b91c1c;
+        }
+        .observations-list {
+            margin-top: 30px;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .observation-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
+        }
+        .observation-item:last-child {
+            border-bottom: none;
+        }
+        .observation-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .observation-doc {
+            font-weight: 600;
+            color: #4f46e5;
+        }
+        .observation-time {
+            color: #888;
+            font-size: 12px;
+        }
+        .observation-severity {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .severity-critical { background: #fee2e2; color: #991b1b; }
+        .severity-high { background: #fed7aa; color: #9a3412; }
+        .severity-medium { background: #fef3c7; color: #92400e; }
+        .severity-low { background: #d1fae5; color: #065f46; }
+        .observation-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 10px 0;
+        }
+        .tag {
+            background: #e5e7eb;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #4f46e5;
+        }
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        #exportArea {
+            display: none;
+            margin-top: 20px;
+        }
+        #exportData {
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Stet Manual Test Observations</h1>
+    
+    <div class="stats" id="stats">
+        <div class="stat-card">
+            <div class="stat-value" id="totalCount">0</div>
+            <div class="stat-label">Total Observations</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="criticalCount">0</div>
+            <div class="stat-label">Critical Issues</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="documentsCount">0</div>
+            <div class="stat-label">Documents Tested</div>
+        </div>
+    </div>
+
+    <form id="observationForm">
+        <h2>Record New Observation</h2>
+        
+        <div class="form-group">
+            <label for="document">Document Name</label>
+            <input type="text" id="document" name="document" placeholder="e.g., manuscript_outline.docx" required>
+        </div>
+
+        <div class="form-group">
+            <label for="thread">Thread # (optional)</label>
+            <input type="number" id="thread" name="thread" placeholder="e.g., 5">
+        </div>
+
+        <div class="form-group">
+            <label>Issue Category</label>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="category" value="extraction"> Extraction</label>
+                <label><input type="checkbox" name="category" value="context"> Context Display</label>
+                <label><input type="checkbox" name="category" value="suggestion"> LLM Suggestion</label>
+                <label><input type="checkbox" name="category" value="export"> Export/Reply</label>
+                <label><input type="checkbox" name="category" value="ui"> UI/UX</label>
+                <label><input type="checkbox" name="category" value="performance"> Performance</label>
+                <label><input type="checkbox" name="category" value="tables"> Tables</label>
+                <label><input type="checkbox" name="category" value="citations"> Citations</label>
+                <label><input type="checkbox" name="category" value="other"> Other</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Severity</label>
+            <div class="rating-group">
+                <label><input type="radio" name="severity" value="low"> Low</label>
+                <label><input type="radio" name="severity" value="medium" checked> Medium</label>
+                <label><input type="radio" name="severity" value="high"> High</label>
+                <label><input type="radio" name="severity" value="critical"> Critical</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" 
+                placeholder="Describe what you observed, expected behavior vs actual behavior..." required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="steps">Steps to Reproduce (optional)</label>
+            <textarea id="steps" name="steps" 
+                placeholder="1. Upload document&#10;2. Navigate to thread #X&#10;3. Click expand context..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Additional Notes</label>
+            <textarea id="notes" name="notes" 
+                placeholder="Any additional context, workarounds, or related observations..."></textarea>
+        </div>
+
+        <button type="submit">Save Observation</button>
+        <button type="button" class="secondary" onclick="clearForm()">Clear Form</button>
+    </form>
+
+    <div class="observations-list">
+        <h2>Recorded Observations</h2>
+        <div id="observationsList"></div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <button onclick="exportData()">Export JSON</button>
+        <button onclick="exportCSV()">Export CSV</button>
+        <button class="danger" onclick="clearAll()">Clear All Data</button>
+    </div>
+
+    <div id="exportArea">
+        <h3>Export Data</h3>
+        <textarea id="exportData" rows="10"></textarea>
+    </div>
+
+    <script>
+        // Load observations from localStorage
+        let observations = JSON.parse(localStorage.getItem('stetObservations') || '[]');
+
+        function saveObservations() {
+            localStorage.setItem('stetObservations', JSON.stringify(observations));
+            updateStats();
+            renderObservations();
+        }
+
+        function updateStats() {
+            document.getElementById('totalCount').textContent = observations.length;
+            document.getElementById('criticalCount').textContent = 
+                observations.filter(o => o.severity === 'critical').length;
+            
+            const uniqueDocs = new Set(observations.map(o => o.document));
+            document.getElementById('documentsCount').textContent = uniqueDocs.size;
+        }
+
+        function renderObservations() {
+            const container = document.getElementById('observationsList');
+            
+            if (observations.length === 0) {
+                container.innerHTML = '<p style="color: #888;">No observations recorded yet.</p>';
+                return;
+            }
+
+            // Sort by timestamp, newest first
+            const sorted = [...observations].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+
+            container.innerHTML = sorted.map((obs, idx) => `
+                <div class="observation-item">
+                    <div class="observation-header">
+                        <span class="observation-doc">${obs.document}${obs.thread ? ' #' + obs.thread : ''}</span>
+                        <span class="observation-time">${new Date(obs.timestamp).toLocaleString()}</span>
+                    </div>
+                    <span class="observation-severity severity-${obs.severity}">${obs.severity.toUpperCase()}</span>
+                    <div class="observation-tags">
+                        ${obs.categories.map(c => `<span class="tag">${c}</span>`).join('')}
+                    </div>
+                    <p>${obs.description}</p>
+                    ${obs.steps ? `<p><strong>Steps:</strong> ${obs.steps.replace(/\n/g, '<br>')}</p>` : ''}
+                    ${obs.notes ? `<p><em>${obs.notes}</em></p>` : ''}
+                    <button class="danger" style="padding: 5px 10px; font-size: 12px;" 
+                        onclick="deleteObservation(${observations.indexOf(obs)})">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteObservation(index) {
+            if (confirm('Delete this observation?')) {
+                observations.splice(index, 1);
+                saveObservations();
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('observationForm').reset();
+        }
+
+        function clearAll() {
+            if (confirm('Delete ALL observations? This cannot be undone!')) {
+                observations = [];
+                saveObservations();
+            }
+        }
+
+        function exportData() {
+            const exportArea = document.getElementById('exportArea');
+            const exportData = document.getElementById('exportData');
+            exportArea.style.display = 'block';
+            exportData.value = JSON.stringify(observations, null, 2);
+        }
+
+        function exportCSV() {
+            const headers = ['timestamp', 'document', 'thread', 'severity', 'categories', 'description', 'steps', 'notes'];
+            const rows = observations.map(obs => 
+                headers.map(h => {
+                    let val = obs[h];
+                    if (Array.isArray(val)) val = val.join(';');
+                    if (typeof val === 'string') {
+                        // Escape quotes and wrap in quotes
+                        val = '"' + val.replace(/"/g, '""').replace(/\n/g, ' ') + '"';
+                    }
+                    return val || '';
+                }).join(',')
+            );
+            
+            const csv = headers.join(',') + '\n' + rows.join('\n');
+            
+            const exportArea = document.getElementById('exportArea');
+            const exportData = document.getElementById('exportData');
+            exportArea.style.display = 'block';
+            exportData.value = csv;
+        }
+
+        // Form submission
+        document.getElementById('observationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // Get checked categories
+            const categories = [];
+            document.querySelectorAll('input[name="category"]:checked').forEach(cb => {
+                categories.push(cb.value);
+            });
+
+            const observation = {
+                timestamp: new Date().toISOString(),
+                document: formData.get('document'),
+                thread: formData.get('thread') || null,
+                severity: formData.get('severity'),
+                categories: categories,
+                description: formData.get('description'),
+                steps: formData.get('steps') || null,
+                notes: formData.get('notes') || null,
+            };
+
+            observations.push(observation);
+            saveObservations();
+            
+            // Clear form but keep document name
+            const docName = formData.get('document');
+            this.reset();
+            document.getElementById('document').value = docName;
+            
+            alert('Observation saved!');
+        });
+
+        // Initial render
+        updateStats();
+        renderObservations();
+    </script>
+</body>
+</html>

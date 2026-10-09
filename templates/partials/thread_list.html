@@ -1,0 +1,713 @@
+<!-- Thread List Container -->
+<div id="document-loaded" class="space-y-4" data-session-id="{{ session_id }}">
+    
+    <!-- Enable Export button -->
+    <script>
+        document.getElementById('export-btn').disabled = false;
+        document.getElementById('export-btn').onclick = function() {
+            document.getElementById('export-modal').classList.remove('hidden');
+        };
+        
+        // Show close document modal
+        function closeDocument() {
+            document.getElementById('close-document-modal').classList.remove('hidden');
+        }
+        
+        // Close the modal
+        function closeCloseDocumentModal() {
+            document.getElementById('close-document-modal').classList.add('hidden');
+        }
+        
+        // Close document and keep session data
+        function closeDocumentKeepData() {
+            window.location.href = '/';
+        }
+        
+        // Close document and delete session data
+        async function closeDocumentDeleteData() {
+            const sessionId = document.getElementById('document-loaded').dataset.sessionId;
+            
+            try {
+                const response = await fetch(`/session/${sessionId}`, {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    alert('Failed to delete session data: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error deleting session:', error);
+                alert('Failed to delete session data');
+            }
+        }
+    </script>
+    
+    <!-- Export Modal -->
+    <div id="export-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-800">📥 Export Document</h3>
+            </div>
+            <!-- Error message area (hidden by default) -->
+            <div id="export-error" class="hidden px-6 py-3 bg-red-50 border-b border-red-200">
+                <p class="text-sm text-red-700" id="export-error-text"></p>
+            </div>
+            <!-- Warning message area (hidden by default) -->
+            <div id="export-warning" class="hidden px-6 py-3 bg-amber-50 border-b border-amber-200">
+                <p class="text-sm text-amber-700" id="export-warning-text"></p>
+            </div>
+            <form id="export-form" action="/export/{{ session_id }}" method="post" onsubmit="handleExportSubmit(event); return false;">
+                <div class="px-6 py-4 space-y-4">
+                    <div>
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" name="insert_tracked_changes" value="true" checked
+                                   class="h-4 w-4 text-blue-600 rounded border-gray-300">
+                            <span class="text-sm text-gray-700">Insert revisions as tracked changes</span>
+                        </label>
+                        <p class="ml-7 text-xs text-gray-500">Changes will appear in Word's review mode</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Author name</label>
+                        <input type="text" name="author" value="Stet"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+                    <button type="button" onclick="closeExportModal()"
+                            class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Export
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Close Document Modal -->
+    <div id="close-document-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <h3 class="text-lg font-semibold text-gray-800">Close Document</h3>
+            </div>
+            <div class="px-6 py-4">
+                <p class="text-sm text-gray-600 mb-4">
+                    Would you like to keep the session data for this document? 
+                    If kept, you can reload it later to continue where you left off.
+                </p>
+                <div class="bg-gray-50 rounded-md p-3 text-xs text-gray-500">
+                    <strong>Session data includes:</strong> generated suggestions, acceptance status, 
+                    chat history, and attachments.
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+                <button type="button" onclick="closeCloseDocumentModal()"
+                        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                    Cancel
+                </button>
+                <button type="button" onclick="closeDocumentDeleteData()"
+                        class="px-4 py-2 text-sm bg-red-600 text-white rounded-md hover:bg-red-700">
+                    Delete & Close
+                </button>
+                <button type="button" onclick="closeDocumentKeepData()"
+                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Keep & Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    // Track if user has acknowledged the warning
+    let warningAcknowledged = false;
+    
+    function closeExportModal() {
+        document.getElementById('export-modal').classList.add('hidden');
+        document.getElementById('export-error').classList.add('hidden');
+        document.getElementById('export-warning').classList.add('hidden');
+        warningAcknowledged = false;  // Reset for next time
+    }
+    
+    function showExportError(message) {
+        const errorDiv = document.getElementById('export-error');
+        const errorText = document.getElementById('export-error-text');
+        errorText.textContent = message;
+        errorDiv.classList.remove('hidden');
+        document.getElementById('export-warning').classList.add('hidden');
+    }
+    
+    function showExportWarning(message) {
+        const warningDiv = document.getElementById('export-warning');
+        const warningText = document.getElementById('export-warning-text');
+        warningText.textContent = message;
+        warningDiv.classList.remove('hidden');
+        document.getElementById('export-error').classList.add('hidden');
+    }
+    
+    function validateExport() {
+        // Count threads with accepted status
+        const acceptedCount = document.querySelectorAll('.thread-card[data-status="accepted"]').length;
+        
+        // Count threads with accepted revisions (from previous accept, even if later edited)
+        const hasAcceptedRevisionCount = document.querySelectorAll('.thread-card[data-has-accepted-revision="true"]').length;
+        
+        // Count threads that have been edited after acceptance (status pending but has accepted revision)
+        const pendingWithRevisionCount = document.querySelectorAll('.thread-card[data-status="pending"][data-has-accepted-revision="true"]').length;
+        
+        // Debug logging
+        console.log('[Export Validation] accepted:', acceptedCount, 
+                    'hasAcceptedRevision:', hasAcceptedRevisionCount,
+                    'pendingWithRevision:', pendingWithRevisionCount);
+        
+        // Total exportable = currently accepted + those with previous accepted revisions
+        const exportableCount = hasAcceptedRevisionCount;
+        
+        if (exportableCount === 0) {
+            showExportError('No accepted suggestions to export. Please accept at least one suggestion before exporting.');
+            return false;
+        }
+        
+        // Show warning if there are pending changes on accepted threads
+        if (pendingWithRevisionCount > 0) {
+            if (!warningAcknowledged) {
+                const warningMsg = pendingWithRevisionCount === 1
+                    ? '1 thread has unaccepted changes. The previously accepted version will be exported. Click Export again to proceed.'
+                    : `${pendingWithRevisionCount} threads have unaccepted changes. Their previously accepted versions will be exported. Click Export again to proceed.`;
+                showExportWarning(warningMsg);
+                warningAcknowledged = true;
+                return false;  // Don't submit yet, wait for user to click again
+            }
+            // User clicked Export again after seeing warning - proceed
+        }
+        
+        // Hide any messages and proceed
+        document.getElementById('export-error').classList.add('hidden');
+        document.getElementById('export-warning').classList.add('hidden');
+        warningAcknowledged = false;
+        return true;
+    }
+    
+    async function handleExportSubmit(event) {
+        // First run validation
+        if (!validateExport()) {
+            event.preventDefault();
+            return false;
+        }
+        
+        // Prevent default form submission - we'll handle it with fetch
+        event.preventDefault();
+        
+        const form = document.getElementById('export-form');
+        const formData = new FormData(form);
+        
+        // Check if running in pywebview (packaged app)
+        const isPackagedApp = typeof window.pywebview !== 'undefined';
+        
+        // For packaged app, request JSON response with file path
+        if (isPackagedApp) {
+            formData.append('native_dialog', 'true');
+        }
+        
+        // Show loading indicator
+        document.getElementById('loading-overlay').classList.remove('hidden');
+        
+        try {
+            const response = await fetch(form.action, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error('Export failed');
+            }
+            
+            // For packaged app: use native save dialog
+            if (isPackagedApp) {
+                const data = await response.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Export preparation failed');
+                }
+                
+                // Hide loading overlay before showing save dialog
+                document.getElementById('loading-overlay').classList.add('hidden');
+                
+                // Call native save dialog
+                const result = await window.pywebview.api.save_export(data.source_path, data.filename);
+                
+                if (result.success) {
+                    closeExportModal();
+                    alert('File saved to: ' + result.path);
+                } else if (result.error !== 'Cancelled') {
+                    throw new Error(result.error);
+                }
+                // If cancelled, just close the modal
+                closeExportModal();
+                return;
+            }
+            
+            // Browser mode: handle file download
+            // Get filename from Content-Disposition header
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'document_with_replies.docx';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1].replace(/['"]/g, '');
+                }
+            }
+            
+            // Get the file as a blob
+            const blob = await response.blob();
+            
+            // Try File System Access API (Chrome/Edge) for "Save As" dialog
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: filename,
+                        types: [{
+                            description: 'Word Document',
+                            accept: {'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']}
+                        }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(blob);
+                    await writable.close();
+                    
+                    // Close modal on success
+                    closeExportModal();
+                    return;
+                } catch (err) {
+                    // User cancelled or API not available, fall through to link download
+                    if (err.name !== 'AbortError') {
+                        console.log('File System Access API failed, using fallback', err);
+                    }
+                }
+            }
+            
+            // Fallback: Create download link (Safari and fallback for other browsers)
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Close modal on success
+            closeExportModal();
+            
+        } catch (error) {
+            console.error('Export error:', error);
+            showExportError('Export failed. Please try again.');
+        } finally {
+            // Hide loading indicator
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+        
+        return false;
+    }
+    </script>
+    
+    <!-- Document Info Bar -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">📄</span>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h3 class="font-semibold text-gray-800">{{ filename }}</h3>
+                        <button onclick="closeDocument()" 
+                                class="text-gray-400 hover:text-red-500 transition text-lg leading-none"
+                                title="Close document">×</button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center space-x-6 text-sm">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-gray-300"></span>
+                    <span class="text-gray-600">Total: <strong>{{ thread_count }}</strong></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-yellow-400"></span>
+                    <span class="text-gray-600">Pending: <strong id="pending-count">{{ pending_count }}</strong></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-green-500"></span>
+                    <span class="text-gray-600">Accepted: <strong id="accepted-count">{{ accepted_count }}</strong></span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                    <span class="text-gray-600">Skipped: <strong id="skipped-count">{{ skipped_count }}</strong></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Generate All Button + Filter Tabs -->
+        <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3">
+            <!-- Generate & Accept All Button -->
+            <button onclick="generateAllSuggestions()" 
+                    id="generate-all-btn"
+                    class="px-3 py-1 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition mr-2"
+                    title="Generate and auto-accept each suggestion sequentially, so each thread sees prior accepted revisions">
+                🤖 Generate & Accept All
+            </button>
+            <span id="generate-progress" class="hidden text-sm text-gray-600 mr-4"></span>
+            
+            <span class="text-gray-300 mr-2">|</span>
+            
+            <button onclick="filterThreads('all')" 
+                    id="filter-all"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md bg-blue-100 text-blue-700">
+                All Threads
+            </button>
+            <button onclick="filterThreads('open')"
+                    id="filter-open"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-100">
+                Open
+            </button>
+            <button onclick="filterThreads('resolved')"
+                    id="filter-resolved"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-100">
+                Resolved
+            </button>
+            <button onclick="filterThreads('pending')"
+                    id="filter-pending"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-100">
+                Pending
+            </button>
+            <button onclick="filterThreads('accepted')"
+                    id="filter-accepted"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-100">
+                Accepted
+            </button>
+            <button onclick="filterThreads('skipped')"
+                    id="filter-skipped"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-100">
+                Skipped
+            </button>
+            <button onclick="filterThreads('deleted-text')"
+                    id="filter-deleted-text"
+                    class="filter-btn px-3 py-1 text-sm font-medium rounded-md text-gray-500 hover:bg-gray-100"
+                    title="Comments attached to deleted text (invisible when Track Changes hidden)">
+                On Deleted Text
+            </button>
+        </div>
+    </div>
+    
+    <script>
+    function filterThreads(filter) {
+        // Update button styles
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('bg-blue-100', 'text-blue-700');
+            btn.classList.add('text-gray-500');
+        });
+        const activeBtn = document.getElementById('filter-' + filter);
+        activeBtn.classList.remove('text-gray-500');
+        activeBtn.classList.add('bg-blue-100', 'text-blue-700');
+        
+        // Filter cards
+        document.querySelectorAll('.thread-card').forEach(card => {
+            const cardStatus = card.getAttribute('data-status');
+            const isResolved = card.getAttribute('data-resolved') === 'true';
+            const isOnDeletedText = card.getAttribute('data-on-deleted-text') === 'true';
+            
+            let show = false;
+            if (filter === 'all') {
+                show = true;
+            } else if (filter === 'open') {
+                // Show only unresolved threads that are NOT on deleted text
+                show = !isResolved && !isOnDeletedText;
+            } else if (filter === 'resolved') {
+                // Show only resolved threads
+                show = isResolved;
+            } else if (filter === 'deleted-text') {
+                // Show only threads on deleted text
+                show = isOnDeletedText;
+            } else {
+                // Filter by status (pending/accepted/skipped)
+                show = (cardStatus === filter);
+            }
+            
+            if (show) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+        
+        // Update counts after filtering (recalculate from DOM)
+        updateCounts();
+    }
+    
+    function updateCounts() {
+        let pending = 0, accepted = 0, skipped = 0;
+        document.querySelectorAll('.thread-card').forEach(card => {
+            const status = card.getAttribute('data-status');
+            if (status === 'pending') pending++;
+            else if (status === 'accepted') accepted++;
+            else if (status === 'skipped') skipped++;
+        });
+        
+        const pendingEl = document.getElementById('pending-count');
+        const acceptedEl = document.getElementById('accepted-count');
+        const skippedEl = document.getElementById('skipped-count');
+        
+        if (pendingEl) pendingEl.textContent = pending;
+        if (acceptedEl) acceptedEl.textContent = accepted;
+        if (skippedEl) skippedEl.textContent = skipped;
+    }
+    
+    // Re-run count update whenever HTMX swaps content
+    document.body.addEventListener('htmx:afterSwap', function(event) {
+        // Small delay to ensure DOM is updated
+        setTimeout(updateCounts, 100);
+    });
+    
+    // ===== Generate All Functionality =====
+    let batchGenerationCancelled = false;
+    let isBatchGenerating = false;
+    
+    function getThreadsNeedingSuggestions() {
+        // Find all thread cards that are pending, visible (not filtered out), and need suggestions
+        // We look for cards that have the "Generate Suggestion" button (not "Regenerate")
+        const allCardContainers = document.querySelectorAll('#thread-cards > div[id^="card-"]');
+        const loadedCards = document.querySelectorAll('.thread-card');
+        // Only consider visible pending cards (respects active filter)
+        const pendingCards = document.querySelectorAll('.thread-card[data-status="pending"]:not(.hidden)');
+        
+        // Find pending cards that have "Generate Suggestion" button (not Regenerate)
+        const needingSuggestion = [];
+        pendingCards.forEach(card => {
+            // Check if this card has a "Generate Suggestion" button (contains that exact text)
+            const buttons = card.querySelectorAll('button');
+            for (const btn of buttons) {
+                if (btn.textContent.includes('Generate Suggestion')) {
+                    needingSuggestion.push(card);
+                    break;
+                }
+            }
+        });
+        
+        const hasSuggestion = pendingCards.length - needingSuggestion.length;
+        const currentFilter = document.querySelector('.filter-btn.bg-blue-100')?.textContent?.trim() || 'unknown';
+        
+        console.log(`[Generate All] Filter: ${currentFilter}, Card containers: ${allCardContainers.length}, Loaded: ${loadedCards.length}, Visible Pending: ${pendingCards.length}, Has suggestion: ${hasSuggestion}, Needing suggestion: ${needingSuggestion.length}`);
+        
+        // Check if cards are still loading
+        if (loadedCards.length < allCardContainers.length) {
+            console.warn(`[Generate All] WARNING: ${allCardContainers.length - loadedCards.length} cards still loading!`);
+        }
+        
+        return needingSuggestion.map(card => card.id.replace('card-', ''));
+    }
+    
+    // Wait for HTMX request triggered by an element to complete
+    function waitForRequest(element, cardId, timeoutMs = 180000) {
+        return new Promise((resolve, reject) => {
+            const handler = function(event) {
+                // Check if this request is from our card (by checking the target)
+                const targetId = event.detail.target?.id;
+                console.log(`[waitForRequest] htmx:afterRequest fired, target: ${targetId}, waiting for: ${cardId}`);
+                if (targetId === cardId) {
+                    cleanup();
+                    console.log(`[waitForRequest] Request complete for ${cardId}`);
+                    // Small delay to let DOM settle
+                    setTimeout(resolve, 200);
+                }
+            };
+            
+            // Check for cancellation every 500ms
+            const cancelCheck = setInterval(() => {
+                if (batchGenerationCancelled) {
+                    cleanup();
+                    console.log(`[waitForRequest] Cancelled while waiting for ${cardId}`);
+                    reject(new Error('Cancelled'));
+                }
+            }, 500);
+            
+            function cleanup() {
+                document.body.removeEventListener('htmx:afterRequest', handler);
+                clearTimeout(timer);
+                clearInterval(cancelCheck);
+            }
+            
+            document.body.addEventListener('htmx:afterRequest', handler);
+            console.log(`[waitForRequest] Waiting for request to complete for ${cardId}`);
+            
+            const timer = setTimeout(() => {
+                cleanup();
+                console.error(`[waitForRequest] Timeout waiting for ${cardId}`);
+                reject(new Error('Timeout'));
+            }, timeoutMs);
+        });
+    }
+    
+    async function generateAllSuggestions() {
+        if (isBatchGenerating) return;
+        
+        // Wait for all cards to load before starting
+        const allCardContainers = document.querySelectorAll('#thread-cards > div[id^="card-"]');
+        const loadedCards = document.querySelectorAll('.thread-card');
+        if (loadedCards.length < allCardContainers.length) {
+            alert(`Please wait - ${allCardContainers.length - loadedCards.length} cards are still loading.`);
+            return;
+        }
+        
+        const threadIds = getThreadsNeedingSuggestions();
+        if (threadIds.length === 0) {
+            alert('No visible threads need suggestions. All visible pending threads already have suggestions generated (or try a different filter).');
+            return;
+        }
+        
+        isBatchGenerating = true;
+        batchGenerationCancelled = false;
+        
+        // Show batch overlay (has clickable cancel button)
+        document.getElementById('batch-overlay').classList.remove('hidden');
+        document.getElementById('generate-all-btn').classList.add('hidden');
+        
+        let completed = 0;
+        let failed = 0;
+        const total = threadIds.length;
+        
+        for (const threadId of threadIds) {
+            if (batchGenerationCancelled) {
+                break;
+            }
+            
+            // Update progress in overlay
+            document.getElementById('batch-progress-text').textContent = 
+                `Generating ${completed + 1} of ${total}...`;
+            
+            try {
+                // Step 1: Generate suggestion
+                let card = document.getElementById(`card-${threadId}`);
+                const generateBtn = card?.querySelector('button[hx-post*="/generate/"]');
+                
+                if (generateBtn) {
+                    const cardId = `card-${threadId}`;
+                    console.log(`[Generate All] Starting generation for thread ${threadId}`);
+                    
+                    // Set up promise BEFORE clicking
+                    const generatePromise = waitForRequest(generateBtn, cardId);
+                    
+                    // Use native click() - more reliable than htmx.trigger
+                    generateBtn.click();
+                    
+                    await generatePromise;
+                    console.log(`[Generate All] Generation complete for thread ${threadId}`);
+                    
+                    // Step 2: Accept the suggestion (so next thread sees updated context)
+                    if (!batchGenerationCancelled) {
+                        document.getElementById('batch-progress-text').textContent = 
+                            `Accepting ${completed + 1} of ${total}...`;
+                        
+                        // Re-fetch the card (it was replaced by HTMX)
+                        card = document.getElementById(`card-${threadId}`);
+                        const acceptBtn = card?.querySelector('button[hx-post*="/accept/"]');
+                        
+                        if (acceptBtn) {
+                            console.log(`[Generate All] Starting acceptance for thread ${threadId}`);
+                            const acceptPromise = waitForRequest(acceptBtn, cardId);
+                            acceptBtn.click();
+                            await acceptPromise;
+                            console.log(`[Generate All] Acceptance complete for thread ${threadId}`);
+                            
+                            // Small delay to ensure server session is updated before next generation
+                            await new Promise(resolve => setTimeout(resolve, 200));
+                        } else {
+                            console.warn(`[Generate All] No accept button found for thread ${threadId}`);
+                        }
+                    }
+                    
+                    completed++;
+                    
+                    // Update progress after each completion
+                    document.getElementById('batch-progress-text').textContent = 
+                        `Generating ${completed + 1} of ${total}...`;
+                } else {
+                    console.warn(`No generate button found for thread ${threadId}`);
+                    failed++;
+                }
+            } catch (error) {
+                if (error.message === 'Cancelled') {
+                    console.log(`[Generate All] Cancelled during thread ${threadId}`);
+                    break;
+                }
+                console.error(`Error generating for thread ${threadId}:`, error);
+                failed++;
+            }
+            
+            // Update counts
+            updateCounts();
+        }
+        
+        // Finish up
+        isBatchGenerating = false;
+        document.getElementById('batch-overlay').classList.add('hidden');
+        document.getElementById('generate-all-btn').classList.remove('hidden');
+        document.getElementById('batch-cancel-btn').textContent = '⏹ Cancel';
+        
+        // Show result in the progress area briefly
+        const progressEl = document.getElementById('generate-progress');
+        progressEl.classList.remove('hidden');
+        
+        if (batchGenerationCancelled) {
+            progressEl.textContent = `Cancelled. Generated ${completed} of ${total}.`;
+        } else if (failed > 0) {
+            progressEl.textContent = `Done! Generated ${completed}, failed ${failed}.`;
+        } else {
+            progressEl.textContent = `Done! Generated ${completed} suggestions.`;
+        }
+        
+        setTimeout(() => progressEl.classList.add('hidden'), 5000);
+    }
+    
+    // Global function for the cancel button in base.html
+    window.cancelBatchGeneration = function() {
+        batchGenerationCancelled = true;
+        document.getElementById('batch-cancel-btn').textContent = 'Cancelling...';
+    }
+    </script>
+    
+    <!-- Thread Cards -->
+    <div id="thread-cards" class="space-y-4">
+        {% for thread in threads %}
+        <div id="card-{{ thread.thread_id }}"
+             hx-get="/thread/{{ session_id }}/{{ thread.thread_id }}"
+             hx-trigger="load"
+             hx-swap="outerHTML">
+            <!-- Loading placeholder -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 animate-pulse">
+                <div class="flex space-x-4">
+                    <div class="flex-1 space-y-3">
+                        <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                    <div class="w-1/3 space-y-3">
+                        <div class="h-4 bg-gray-200 rounded"></div>
+                        <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if thread_count == 0 %}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <span class="text-4xl mb-3 block">📝</span>
+        <h3 class="text-lg font-semibold text-yellow-800 mb-2">No Comments Found</h3>
+        <p class="text-sm text-yellow-700">
+            This document doesn't contain any visible comment threads.
+        </p>
+    </div>
+    {% endif %}
+    
+</div>

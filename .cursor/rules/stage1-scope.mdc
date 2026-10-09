@@ -1,0 +1,15 @@
+---
+description: Stage 1 scope discipline — implement only what the active spec describes
+alwaysApply: true
+---
+
+# Stage 1 scope discipline
+
+Stage 1 is being implemented hands-off via a spec → approve → implement → report cycle. Strict scope discipline is what makes that workable.
+
+- **Implement only what the active spec describes.** The active spec is `docs/specs/stage1_M{N}_spec.md` for the milestone currently being worked on. Anything outside it is out of scope, even if it looks like an easy win.
+- **Do not refactor existing working code unless the active spec explicitly calls for it.** "Quick cleanups" while passing through a file are not allowed — they expand diffs and risk breaking the legacy card UI baseline.
+- **If you discover a related issue during implementation, report it in the milestone report.** Do not fix it. The project owner decides whether it becomes a follow-up spec.
+- **If a spec is ambiguous, ask one clarifying question before coding.** Do not guess. One question is fine; an essay of questions usually means the spec needs revision.
+- **Out-of-scope items go in the milestone spec explicitly.** When writing a spec, list what this milestone is *not* doing — especially things adjacent enough that a reader might assume they are included.
+- The Stage 1 plan, glossary, decision log, and specs live under `docs/`. Process changes belong there, not in code comments.

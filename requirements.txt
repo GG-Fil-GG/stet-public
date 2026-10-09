@@ -1,0 +1,38 @@
+# Core dependencies
+lxml>=5.0.0
+
+# Web framework (FastAPI)
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6  # For file uploads
+jinja2>=3.1.0
+
+# Desktop app packaging
+pywebview>=4.0.0  # Native window wrapper for desktop builds
+
+# Legacy (Streamlit app archived to _archive/app_streamlit.py)
+# streamlit>=1.28.0  # Uncomment only if you need the archived Streamlit version
+
+# LLM integration
+openai>=1.0.0
+python-dotenv>=1.0.0
+requests>=2.28.0
+pyyaml>=6.0.0  # For config file parsing
+tiktoken>=0.5.0  # For OpenAI token counting
+# ollama  # installed separately via brew
+
+# File parsing
+pdfplumber>=0.10.0  # PDF text and table extraction
+openpyxl>=3.1.0  # Excel XLSX file support
+pandas>=2.0.0  # Spreadsheet data handling
+striprtf>=0.0.26  # RTF text extraction (M8)
+python-pptx>=0.6.23  # PPTX slide text + notes extraction (M8)
+
+# Development & Testing
+pytest>=7.0.0
+pytest-cov>=4.0.0  # Test coverage reporting
+
+# Code Quality (Static Analysis)
+flake8>=6.0.0  # Linting
+mypy>=1.0.0  # Type checking
+radon>=6.0.0  # Cyclomatic complexity metrics

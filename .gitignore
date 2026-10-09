@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project-specific - outputs
+test_data/local/
+output/
+
+# Word temp files
+~$*.docx
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env
+
+# Session/state files
+*.json.bak
+
+# Vendor reference material (large, downloadable from upstream)
+# Keep the README so the folder's purpose is documented in-repo.
+docs/microsoft_docs/*
+!docs/microsoft_docs/README.md
+

@@ -1,0 +1,707 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:cx="http://schemas.microsoft.com/office/drawing/2014/chartex" xmlns:cx1="http://schemas.microsoft.com/office/drawing/2015/9/8/chartex" xmlns:cx2="http://schemas.microsoft.com/office/drawing/2015/10/21/chartex" xmlns:cx3="http://schemas.microsoft.com/office/drawing/2016/5/9/chartex" xmlns:cx4="http://schemas.microsoft.com/office/drawing/2016/5/10/chartex" xmlns:cx5="http://schemas.microsoft.com/office/drawing/2016/5/11/chartex" xmlns:cx6="http://schemas.microsoft.com/office/drawing/2016/5/12/chartex" xmlns:cx7="http://schemas.microsoft.com/office/drawing/2016/5/13/chartex" xmlns:cx8="http://schemas.microsoft.com/office/drawing/2016/5/14/chartex" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:aink="http://schemas.microsoft.com/office/drawing/2016/ink" xmlns:am3d="http://schemas.microsoft.com/office/drawing/2017/model3d" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:oel="http://schemas.microsoft.com/office/2019/extlst" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:w16cex="http://schemas.microsoft.com/office/word/2018/wordml/cex" xmlns:w16cid="http://schemas.microsoft.com/office/word/2016/wordml/cid" xmlns:w16="http://schemas.microsoft.com/office/word/2018/wordml" xmlns:w16du="http://schemas.microsoft.com/office/word/2023/wordml/word16du" xmlns:w16sdtdh="http://schemas.microsoft.com/office/word/2020/wordml/sdtdatahash" xmlns:w16sdtfl="http://schemas.microsoft.com/office/word/2024/wordml/sdtformatlock" xmlns:w16se="http://schemas.microsoft.com/office/word/2015/wordml/symex" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 w15 w16se w16cid w16 w16cex w16sdtdh w16sdtfl w16du wp14">
+  <w:body>
+    <w:p w14:paraId="3E920D1A" w14:textId="31EA3D03" w:rsidR="00436F5E" w:rsidRDefault="00E84E96" w:rsidP="004233CF">
+      <w:pPr>
+        <w:pStyle w:val="Title"/>
+        <w:spacing w:line="276" w:lineRule="auto"/>
+        <w:jc w:val="center"/>
+      </w:pPr>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t xml:space="preserve">Phase 3 Randomized, Double-Blind Study of </w:t>
+      </w:r>
+      <w:proofErr w:type="spellStart"/>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t>Stetomab</w:t>
+      </w:r>
+      <w:proofErr w:type="spellEnd"/>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t xml:space="preserve"> in Patients with Resistant Hypertension</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="2392D198" w14:textId="77777777" w:rsidR="00667CBE" w:rsidRDefault="00667CBE" w:rsidP="00667CBE"/>
+    <w:p w14:paraId="0D599636" w14:textId="03E9BAB8" w:rsidR="00667CBE" w:rsidRDefault="00B53A8A" w:rsidP="00667CBE">
+      <w:pPr>
+        <w:rPr>
+          <w:vertAlign w:val="superscript"/>
+        </w:rPr>
+      </w:pPr>
+      <w:r w:rsidRPr="00B53A8A">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t>Authors:</w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:r w:rsidR="00667CBE">
+        <w:t>A. Academi</w:t>
+      </w:r>
+      <w:r w:rsidR="0070512F">
+        <w:t>c</w:t>
+      </w:r>
+      <w:r w:rsidR="00667CBE">
+        <w:t>-Aut</w:t>
+      </w:r>
+      <w:r w:rsidR="0070512F">
+        <w:t>h</w:t>
+      </w:r>
+      <w:r w:rsidR="00667CBE">
+        <w:t>or</w:t>
+      </w:r>
+      <w:r w:rsidR="00E40ADA">
+        <w:t>,</w:t>
+      </w:r>
+      <w:r w:rsidR="00667CBE" w:rsidRPr="00667CBE">
+        <w:rPr>
+          <w:vertAlign w:val="superscript"/>
+        </w:rPr>
+        <w:t>1</w:t>
+      </w:r>
+      <w:r w:rsidR="00E40ADA" w:rsidRPr="00E40ADA">
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:r w:rsidR="00E40ADA">
+        <w:t>B. Departmenthe</w:t>
+      </w:r>
+      <w:r w:rsidR="0070512F">
+        <w:t>ad</w:t>
+      </w:r>
+      <w:r w:rsidR="00E40ADA">
+        <w:t>.</w:t>
+      </w:r>
+      <w:r w:rsidR="00E40ADA" w:rsidRPr="00E40ADA">
+        <w:rPr>
+          <w:vertAlign w:val="superscript"/>
+        </w:rPr>
+        <w:t>1</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="4F89E693" w14:textId="6689460E" w:rsidR="00667CBE" w:rsidRDefault="00B53A8A" w:rsidP="00667CBE">
+      <w:r w:rsidRPr="00B53A8A">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t>Affiliations:</w:t>
+      </w:r>
+      <w:r w:rsidR="00925A01">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:r w:rsidR="00667CBE" w:rsidRPr="00667CBE">
+        <w:rPr>
+          <w:vertAlign w:val="superscript"/>
+        </w:rPr>
+        <w:t>1</w:t>
+      </w:r>
+      <w:r w:rsidR="00667CBE">
+        <w:t>Cardiology Department, University Hospital City, City, Country.</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="7CF366BF" w14:textId="77777777" w:rsidR="00667CBE" w:rsidRPr="00667CBE" w:rsidRDefault="00667CBE" w:rsidP="00667CBE"/>
+    <w:p w14:paraId="61E53057" w14:textId="2FBD03D1" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+      <w:pPr>
+        <w:spacing w:before="240" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r w:rsidRPr="002D7891">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t>Introduction:</w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> Arterial hypertension remains a leading cause of cardiovascular morbidity and mortality worldwide. Despite the availability of multiple antihypertensive classes, a significant proportion of patients fail to achieve target blood pressure levels. </w:t>
+      </w:r>
+      <w:commentRangeStart w:id="0"/>
+      <w:proofErr w:type="spellStart"/>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:t>Stetomab</w:t>
+      </w:r>
+      <w:proofErr w:type="spellEnd"/>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:t xml:space="preserve"> is a revolutionary breakthrough poised to redefine the treatment landscape for resistant hypertension, offering unparalleled efficacy and new hope for millions of patients who have failed standard therapies.</w:t>
+      </w:r>
+      <w:commentRangeEnd w:id="0"/>
+      <w:r w:rsidR="00130710">
+        <w:rPr>
+          <w:rStyle w:val="CommentReference"/>
+        </w:rPr>
+        <w:commentReference w:id="0"/>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> This study aimed to evaluate the efficacy and safety of </w:t>
+      </w:r>
+      <w:proofErr w:type="spellStart"/>
+      <w:r>
+        <w:t>stetomab</w:t>
+      </w:r>
+      <w:proofErr w:type="spellEnd"/>
+      <w:r>
+        <w:t xml:space="preserve"> in patients with resistant hypertension.</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="4685B513" w14:textId="077CD311" w:rsidR="00B466A7" w:rsidRDefault="00B466A7" w:rsidP="00B466A7">
+      <w:pPr>
+        <w:spacing w:before="240" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r w:rsidRPr="00B466A7">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t>Methods:</w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> This was a </w:t>
+      </w:r>
+      <w:proofErr w:type="spellStart"/>
+      <w:r>
+        <w:t>multicenter</w:t>
+      </w:r>
+      <w:proofErr w:type="spellEnd"/>
+      <w:r>
+        <w:t>, double-blind, randomized, placebo-controlled, Phase 3 trial conducted at 45 sites in Europe and North America. Eligible patients were adults (aged ≥18 years) with resistant hypertension, defined as a mean seated systolic blood pressure (SBP) ≥140 mmHg despite adherence to stable doses of at least three antihypertensive agents, including a diuretic.</w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve">Patients were randomized 1:1 to receive oral </w:t>
+      </w:r>
+      <w:proofErr w:type="spellStart"/>
+      <w:r>
+        <w:t>stetomab</w:t>
+      </w:r>
+      <w:proofErr w:type="spellEnd"/>
+      <w:r>
+        <w:t xml:space="preserve"> 10 mg or matching placebo once daily for 12 weeks. The primary efficacy endpoint was the change from baseline in mean seated SBP at Week 12. Safety assessments included monitoring of serum potassium and cortisol levels.</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="0ACFE22E" w14:textId="664ADC5C" w:rsidR="00E84E96" w:rsidRPr="00B466A7" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+      <w:pPr>
+        <w:spacing w:before="240" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r w:rsidRPr="002D7891">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:t>Results:</w:t>
+      </w:r>
+      <w:r>
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:r w:rsidRPr="00B466A7">
+        <w:t xml:space="preserve">The primary endpoint was the change from baseline in mean seated systolic blood pressure (SBP) at Week 12. In the intention-to-treat population, treatment with </w:t>
+      </w:r>
+      <w:proofErr w:type="spellStart"/>
+      <w:r w:rsidRPr="00B466A7">
+        <w:t>stetomab</w:t>
+      </w:r>
+      <w:proofErr w:type="spellEnd"/>
+      <w:r w:rsidRPr="00B466A7">
+        <w:t xml:space="preserve"> resulted in a reduction in SBP compared with the placebo group. </w:t>
+      </w:r>
+      <w:commentRangeStart w:id="1"/>
+      <w:r w:rsidRPr="00B466A7">
+        <w:t>This effect was consistent across all prespecified subgroups, including age, sex, and baseline BMI.</w:t>
+      </w:r>
+      <w:commentRangeEnd w:id="1"/>
+      <w:r w:rsidR="00AA26A4" w:rsidRPr="00B466A7">
+        <w:rPr>
+          <w:rStyle w:val="CommentReference"/>
+        </w:rPr>
+        <w:commentReference w:id="1"/>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="26B1EF42" w14:textId="2B01ADD2" w:rsidR="00E84E96" w:rsidRPr="0017304A" w:rsidRDefault="00E84E96" w:rsidP="0017304A">
+      <w:pPr>
+        <w:rPr>
+          <w:rStyle w:val="Strong"/>
+        </w:rPr>
+      </w:pPr>
+      <w:r w:rsidRPr="0017304A">
+        <w:rPr>
+          <w:rStyle w:val="Strong"/>
+        </w:rPr>
+        <w:t>Table 1. Baseline demographics and clinical characteristics</w:t>
+      </w:r>
+    </w:p>
+    <w:tbl>
+      <w:tblPr>
+        <w:tblStyle w:val="TableGrid"/>
+        <w:tblW w:w="0" w:type="auto"/>
+        <w:tblBorders>
+          <w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+          <w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+          <w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+          <w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+          <w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+          <w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/>
+        </w:tblBorders>
+        <w:tblLook w:val="04A0" w:firstRow="1" w:lastRow="0" w:firstColumn="1" w:lastColumn="0" w:noHBand="0" w:noVBand="1"/>
+      </w:tblPr>
+      <w:tblGrid>
+        <w:gridCol w:w="3005"/>
+        <w:gridCol w:w="3005"/>
+        <w:gridCol w:w="3006"/>
+      </w:tblGrid>
+      <w:tr w:rsidR="00E84E96" w14:paraId="57A227CE" w14:textId="77777777" w:rsidTr="00E84E96">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+            <w:tcBorders>
+              <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+              <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="73AEF23E" w14:textId="437817CC" w:rsidR="00E84E96" w:rsidRPr="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00E84E96">
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Characteristic</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+            <w:tcBorders>
+              <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+              <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="19903999" w14:textId="7135C18D" w:rsidR="00E84E96" w:rsidRPr="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:r w:rsidRPr="00E84E96">
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Placebo (N=150)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3006" w:type="dxa"/>
+            <w:tcBorders>
+              <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+              <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="4CFE6CD6" w14:textId="364F3343" w:rsidR="00E84E96" w:rsidRPr="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+            </w:pPr>
+            <w:proofErr w:type="spellStart"/>
+            <w:r w:rsidRPr="00E84E96">
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t>Stetomab</w:t>
+            </w:r>
+            <w:proofErr w:type="spellEnd"/>
+            <w:r w:rsidRPr="00E84E96">
+              <w:rPr>
+                <w:b/>
+                <w:bCs/>
+              </w:rPr>
+              <w:t xml:space="preserve"> 10 mg (N=152)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E84E96" w14:paraId="32A62F74" w14:textId="77777777" w:rsidTr="00E84E96">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+            <w:tcBorders>
+              <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="02DDF06B" w14:textId="176E608B" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>Age (years), mean (SD)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+            <w:tcBorders>
+              <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="175CDF89" w14:textId="007A67C0" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>58.2 (10.1)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3006" w:type="dxa"/>
+            <w:tcBorders>
+              <w:top w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="60F85A1F" w14:textId="72EAED84" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>59.1 (9.8)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E84E96" w14:paraId="663158CE" w14:textId="77777777" w:rsidTr="00E84E96">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="2C7746F7" w14:textId="39A6C6B5" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>Female, n (%)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="76EA32B1" w14:textId="4E21E665" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>72 (48.0)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3006" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="11A79CA6" w14:textId="71107F71" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:commentRangeStart w:id="2"/>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>75 (49.3)</w:t>
+            </w:r>
+            <w:commentRangeEnd w:id="2"/>
+            <w:r w:rsidR="00AA26A4">
+              <w:rPr>
+                <w:rStyle w:val="CommentReference"/>
+              </w:rPr>
+              <w:commentReference w:id="2"/>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E84E96" w14:paraId="220BD63A" w14:textId="77777777" w:rsidTr="00E84E96">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0E28C223" w14:textId="146FFCF8" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00B466A7">
+              <w:t>BMI</w:t>
+            </w:r>
+            <w:r w:rsidRPr="00B466A7">
+              <w:rPr>
+                <w:i/>
+                <w:iCs/>
+              </w:rPr>
+              <w:t xml:space="preserve"> </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>(kg/m²), mean (SD)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="4CAC7063" w14:textId="27487E54" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>31.4 (4.2)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3006" w:type="dxa"/>
+          </w:tcPr>
+          <w:p w14:paraId="0E605E3C" w14:textId="232313E4" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>31.2 (4.5)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+      <w:tr w:rsidR="00E84E96" w14:paraId="6E9071AE" w14:textId="77777777" w:rsidTr="00E84E96">
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+            <w:tcBorders>
+              <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="3B262BEA" w14:textId="13BECE39" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00B466A7">
+              <w:t xml:space="preserve">SBP </w:t>
+            </w:r>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>(mmHg), mean (SD)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3005" w:type="dxa"/>
+            <w:tcBorders>
+              <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="426F765E" w14:textId="19FA239F" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>155.4 (12.1)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+        <w:tc>
+          <w:tcPr>
+            <w:tcW w:w="3006" w:type="dxa"/>
+            <w:tcBorders>
+              <w:bottom w:val="single" w:sz="4" w:space="0" w:color="auto"/>
+            </w:tcBorders>
+          </w:tcPr>
+          <w:p w14:paraId="491CBD21" w14:textId="2C35461B" w:rsidR="00E84E96" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+            <w:pPr>
+              <w:spacing w:line="276" w:lineRule="auto"/>
+              <w:jc w:val="center"/>
+            </w:pPr>
+            <w:r w:rsidRPr="00281DA2">
+              <w:t>154.8 (11.9)</w:t>
+            </w:r>
+          </w:p>
+        </w:tc>
+      </w:tr>
+    </w:tbl>
+    <w:p w14:paraId="47BAD27B" w14:textId="3FB3429C" w:rsidR="002F0DD7" w:rsidRDefault="00E84E96" w:rsidP="00E84E96">
+      <w:pPr>
+        <w:spacing w:before="240" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r w:rsidRPr="002D7891">
+        <w:rPr>
+          <w:b/>
+          <w:bCs/>
+        </w:rPr>
+        <w:lastRenderedPageBreak/>
+        <w:t>Discussion:</w:t>
+      </w:r>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:commentRangeStart w:id="3"/>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t xml:space="preserve">These findings support the hypothesis that aldosterone synthase inhibition </w:t>
+      </w:r>
+      <w:r w:rsidR="00CD24B2">
+        <w:t xml:space="preserve">with </w:t>
+      </w:r>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t>can provide additional blood pressure lowering in patients uncontrolled on standard therapy. The safety profile was consistent with previous studies</w:t>
+      </w:r>
+      <w:r w:rsidR="002F0DD7">
+        <w:t xml:space="preserve"> </w:t>
+      </w:r>
+      <w:r w:rsidR="002F0DD7">
+        <w:fldChar w:fldCharType="begin"/>
+      </w:r>
+      <w:r w:rsidR="00130710">
+        <w:instrText xml:space="preserve"> ADDIN EN.CITE &lt;EndNote&gt;&lt;Cite&gt;&lt;Author&gt;Freeman&lt;/Author&gt;&lt;Year&gt;2023&lt;/Year&gt;&lt;RecNum&gt;1&lt;/RecNum&gt;&lt;DisplayText&gt;[1]&lt;/DisplayText&gt;&lt;record&gt;&lt;rec-number&gt;1&lt;/rec-number&gt;&lt;foreign-keys&gt;&lt;key app="EN" db-id="tetrwsxxnvds5ae00x4v9xd0zeasaedpdddr" timestamp="1770682856"&gt;1&lt;/key&gt;&lt;/foreign-keys&gt;&lt;ref-type name="Journal Article"&gt;17&lt;/ref-type&gt;&lt;contributors&gt;&lt;authors&gt;&lt;author&gt;Freeman, M. W.&lt;/author&gt;&lt;author&gt;Halvorsen, Y. D.&lt;/author&gt;&lt;author&gt;Marshall, W.&lt;/author&gt;&lt;author&gt;Pater, M.&lt;/author&gt;&lt;author&gt;Isaacsohn, J.&lt;/author&gt;&lt;author&gt;Pearce, C.&lt;/author&gt;&lt;author&gt;Murphy, B.&lt;/author&gt;&lt;author&gt;Alp, N.&lt;/author&gt;&lt;author&gt;Srivastava, A.&lt;/author&gt;&lt;author&gt;Bhatt, D. L.&lt;/author&gt;&lt;author&gt;Brown, M. J.&lt;/author&gt;&lt;/authors&gt;&lt;/contributors&gt;&lt;auth-address&gt;From CinCor Pharma (M.W.F., Y.-D.H., W.M., C.P.) and Brigham and Women&amp;apos;s Hospital, Harvard Medical School (D.L.B.) - both in Boston; CinRx Pharma (M.P., J.I., B.M.) and Medpace (N.A., A.S.) - both in Cincinnati; and the Department of Clinical Pharmacology, William Harvey Research Institute, Queen Mary University of London, London (M.J.B.).&lt;/auth-address&gt;&lt;titles&gt;&lt;title&gt;Phase 2 Trial of Baxdrostat for Treatment-Resistant Hypertension&lt;/title&gt;&lt;secondary-title&gt;N Engl J Med&lt;/secondary-title&gt;&lt;/titles&gt;&lt;periodical&gt;&lt;full-title&gt;N Engl J Med&lt;/full-title&gt;&lt;/periodical&gt;&lt;pages&gt;395-405&lt;/pages&gt;&lt;volume&gt;388&lt;/volume&gt;&lt;number&gt;5&lt;/number&gt;&lt;edition&gt;20221107&lt;/edition&gt;&lt;keywords&gt;&lt;keyword&gt;Humans&lt;/keyword&gt;&lt;keyword&gt;Aldosterone/blood/metabolism&lt;/keyword&gt;&lt;keyword&gt;*Antihypertensive Agents/adverse effects/therapeutic use&lt;/keyword&gt;&lt;keyword&gt;Blood Pressure/drug effects&lt;/keyword&gt;&lt;keyword&gt;*Cytochrome P-450 CYP11B2/antagonists &amp;amp; inhibitors&lt;/keyword&gt;&lt;keyword&gt;Double-Blind Method&lt;/keyword&gt;&lt;keyword&gt;*Hypertension/drug therapy/etiology&lt;/keyword&gt;&lt;/keywords&gt;&lt;dates&gt;&lt;year&gt;2023&lt;/year&gt;&lt;pub-dates&gt;&lt;date&gt;Feb 2&lt;/date&gt;&lt;/pub-dates&gt;&lt;/dates&gt;&lt;isbn&gt;0028-4793&lt;/isbn&gt;&lt;accession-num&gt;36342143&lt;/accession-num&gt;&lt;urls&gt;&lt;/urls&gt;&lt;electronic-resource-num&gt;10.1056/NEJMoa2213169&lt;/electronic-resource-num&gt;&lt;remote-database-provider&gt;NLM&lt;/remote-database-provider&gt;&lt;language&gt;eng&lt;/language&gt;&lt;/record&gt;&lt;/Cite&gt;&lt;/EndNote&gt;</w:instrText>
+      </w:r>
+      <w:r w:rsidR="002F0DD7">
+        <w:fldChar w:fldCharType="separate"/>
+      </w:r>
+      <w:r w:rsidR="00130710">
+        <w:rPr>
+          <w:noProof/>
+        </w:rPr>
+        <w:t>[1]</w:t>
+      </w:r>
+      <w:r w:rsidR="002F0DD7">
+        <w:fldChar w:fldCharType="end"/>
+      </w:r>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t>,</w:t>
+      </w:r>
+      <w:commentRangeEnd w:id="3"/>
+      <w:r w:rsidR="00FB4453">
+        <w:rPr>
+          <w:rStyle w:val="CommentReference"/>
+        </w:rPr>
+        <w:commentReference w:id="3"/>
+      </w:r>
+      <w:r w:rsidRPr="00E84E96">
+        <w:t xml:space="preserve"> with no unexpected adverse events reported.</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="00778060" w14:textId="77777777" w:rsidR="002F0DD7" w:rsidRDefault="002F0DD7" w:rsidP="00E84E96">
+      <w:pPr>
+        <w:spacing w:before="240" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+    </w:p>
+    <w:p w14:paraId="092E8191" w14:textId="75C73779" w:rsidR="002F0DD7" w:rsidRPr="002F0DD7" w:rsidRDefault="002F0DD7" w:rsidP="002F0DD7">
+      <w:pPr>
+        <w:pStyle w:val="Heading1"/>
+        <w:rPr>
+          <w:color w:val="000000" w:themeColor="text1"/>
+        </w:rPr>
+      </w:pPr>
+      <w:r w:rsidRPr="002F0DD7">
+        <w:rPr>
+          <w:color w:val="000000" w:themeColor="text1"/>
+        </w:rPr>
+        <w:t>References</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="60AEBFDC" w14:textId="77777777" w:rsidR="00130710" w:rsidRPr="00130710" w:rsidRDefault="002F0DD7" w:rsidP="00130710">
+      <w:pPr>
+        <w:pStyle w:val="EndNoteBibliography"/>
+        <w:ind w:left="720" w:hanging="720"/>
+        <w:rPr>
+          <w:noProof/>
+        </w:rPr>
+      </w:pPr>
+      <w:r>
+        <w:fldChar w:fldCharType="begin"/>
+      </w:r>
+      <w:r>
+        <w:instrText xml:space="preserve"> ADDIN EN.REFLIST </w:instrText>
+      </w:r>
+      <w:r>
+        <w:fldChar w:fldCharType="separate"/>
+      </w:r>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:rPr>
+          <w:noProof/>
+        </w:rPr>
+        <w:t>1.</w:t>
+      </w:r>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:rPr>
+          <w:noProof/>
+        </w:rPr>
+        <w:tab/>
+        <w:t xml:space="preserve">Freeman, M.W., et al., </w:t>
+      </w:r>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:rPr>
+          <w:i/>
+          <w:noProof/>
+        </w:rPr>
+        <w:t>Phase 2 Trial of Baxdrostat for Treatment-Resistant Hypertension.</w:t>
+      </w:r>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:rPr>
+          <w:noProof/>
+        </w:rPr>
+        <w:t xml:space="preserve"> N Engl J Med, 2023. </w:t>
+      </w:r>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:rPr>
+          <w:b/>
+          <w:noProof/>
+        </w:rPr>
+        <w:t>388</w:t>
+      </w:r>
+      <w:r w:rsidR="00130710" w:rsidRPr="00130710">
+        <w:rPr>
+          <w:noProof/>
+        </w:rPr>
+        <w:t>(5): p. 395-405.</w:t>
+      </w:r>
+    </w:p>
+    <w:p w14:paraId="0799970B" w14:textId="72E545AC" w:rsidR="00E84E96" w:rsidRDefault="002F0DD7" w:rsidP="00E84E96">
+      <w:pPr>
+        <w:spacing w:before="240" w:line="276" w:lineRule="auto"/>
+      </w:pPr>
+      <w:r>
+        <w:fldChar w:fldCharType="end"/>
+      </w:r>
+    </w:p>
+    <w:sectPr w:rsidR="00E84E96">
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1440" w:right="1440" w:bottom="1440" w:left="1440" w:header="708" w:footer="708" w:gutter="0"/>
+      <w:cols w:space="708"/>
+      <w:docGrid w:linePitch="360"/>
+    </w:sectPr>
+  </w:body>
+</w:document>

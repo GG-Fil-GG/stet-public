@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Stet{% endblock %}</title>
+    
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    
+    <!-- TipTap Rich Text Editor via ES Modules -->
+    <script type="module">
+        // Load TipTap and extensions via esm.sh
+        import { Editor, Mark, mergeAttributes } from 'https://esm.sh/@tiptap/core@2.1.13'
+        import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.1.13'
+        import Underline from 'https://esm.sh/@tiptap/extension-underline@2.1.13'
+        import Superscript from 'https://esm.sh/@tiptap/extension-superscript@2.1.13'
+        import Subscript from 'https://esm.sh/@tiptap/extension-subscript@2.1.13'
+        
+        // Custom mark for diff insertions (green highlight)
+        const DiffInsert = Mark.create({
+            name: 'diffInsert',
+            
+            parseHTML() {
+                return [
+                    { tag: 'span.diff-insert' },
+                    { tag: 'span[class*="diff-insert"]' },
+                ]
+            },
+            
+            renderHTML({ HTMLAttributes }) {
+                return ['span', mergeAttributes({ class: 'diff-insert' }, HTMLAttributes), 0]
+            },
+        })
+        
+        // Custom mark for diff deletions (red strikethrough, non-editable)
+        const DiffDelete = Mark.create({
+            name: 'diffDelete',
+            
+            parseHTML() {
+                return [
+                    { tag: 'span.diff-delete' },
+                    { tag: 'span[class*="diff-delete"]' },
+                ]
+            },
+            
+            renderHTML({ HTMLAttributes }) {
+                return ['span', mergeAttributes({ 
+                    class: 'diff-delete',
+                    contenteditable: 'false'
+                }, HTMLAttributes), 0]
+            },
+        })
+        
+        // Global registry of TipTap editors by thread ID
+        window.tiptapEditors = window.tiptapEditors || {};
+        
+        // Create or get a TipTap editor for a thread
+        window.createTipTapEditor = function(threadId, sessionId, initialContent) {
+            // Destroy existing editor if any
+            if (window.tiptapEditors[threadId]) {
+                window.tiptapEditors[threadId].destroy();
+                delete window.tiptapEditors[threadId];
+            }
+            
+            const element = document.querySelector(`#tiptap-editor-${threadId}`);
+            if (!element) {
+                console.error(`TipTap container not found for thread ${threadId}`);
+                return null;
+            }
+            
+            const editor = new Editor({
+                element: element,
+                extensions: [
+                    StarterKit.configure({
+                        // Disable features we don't need
+                        heading: false,
+                        bulletList: false,
+                        orderedList: false,
+                        listItem: false,
+                        blockquote: false,
+                        codeBlock: false,
+                        horizontalRule: false,
+                    }),
+                    Underline,
+                    Superscript,
+                    Subscript,
+                    DiffInsert,
+                    DiffDelete,
+                ],
+                content: initialContent || '',
+                editorProps: {
+                    attributes: {
+                        class: 'prose prose-sm max-w-none focus:outline-none min-h-[120px] p-3',
+                        'data-thread-id': threadId,
+                        'data-session-id': sessionId,
+                    },
+                },
+                onUpdate: ({ editor }) => {
+                    // Save content periodically but don't refresh diff while editing
+                    window.scheduleTipTapAutoSave(threadId, sessionId);
+                },
+                onBlur: ({ editor }) => {
+                    // Save and refresh diff when user finishes editing
+                    window.saveTipTapContent(threadId, sessionId, true);
+                },
+            });
+            
+            window.tiptapEditors[threadId] = editor;
+            return editor;
+        };
+        
+        // Get editor instance
+        window.getTipTapEditor = function(threadId) {
+            return window.tiptapEditors[threadId];
+        };
+        
+        // Auto-save timer storage
+        window.tiptapAutoSaveTimers = window.tiptapAutoSaveTimers || {};
+        
+        // Schedule auto-save with debounce
+        window.scheduleTipTapAutoSave = function(threadId, sessionId) {
+            if (window.tiptapAutoSaveTimers[threadId]) {
+                clearTimeout(window.tiptapAutoSaveTimers[threadId]);
+            }
+            
+            window.tiptapAutoSaveTimers[threadId] = setTimeout(() => {
+                window.saveTipTapContent(threadId, sessionId, false);
+            }, 800);
+        };
+        
+        // Save TipTap content
+        window.saveTipTapContent = function(threadId, sessionId, refreshDiffAfter = false) {
+            const editor = window.tiptapEditors[threadId];
+            if (!editor) return;
+            
+            // Get HTML and strip diff markers
+            let htmlContent = editor.getHTML();
+            htmlContent = window.stripTipTapDiffMarkers(htmlContent);
+            
+            // Extract plain text
+            const plainText = editor.getText();
+            
+            const formData = new FormData();
+            formData.append('revised_text', plainText);
+            formData.append('revised_text_html', htmlContent);
+            
+            // Check if accepted and needs re-acceptance
+            const card = document.getElementById('card-' + threadId);
+            const isAccepted = card && card.dataset.status === 'accepted';
+            if (isAccepted) {
+                formData.append('reset_acceptance', 'true');
+                
+                // Update data-status attribute for export validation
+                card.dataset.status = 'pending';
+                
+                // Update UI locally
+                const acceptedBadge = card.querySelector('.text-green-600.text-sm.font-medium');
+                if (acceptedBadge) {
+                    const actionContainer = acceptedBadge.parentElement;
+                    if (actionContainer) {
+                        acceptedBadge.outerHTML = `
+                            <button hx-post="/accept/${sessionId}/${threadId}"
+                                    hx-target="#card-${threadId}"
+                                    hx-swap="outerHTML"
+                                    class="px-4 py-1.5 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition">
+                                ✓ Accept
+                            </button>`;
+                        htmx.process(actionContainer);
+                    }
+                }
+                
+                const headerBadge = card.querySelector('.bg-green-100.text-green-700');
+                if (headerBadge) headerBadge.remove();
+                card.classList.remove('border-l-4', 'border-l-green-500');
+                
+                console.log('[TipTap Save] Reset thread', threadId, 'from accepted to pending');
+            }
+            
+            fetch('/update_suggestion/' + sessionId + '/' + threadId, {
+                method: 'POST',
+                body: formData
+            })
+            .then(() => {
+                if (refreshDiffAfter) {
+                    window.refreshTipTapDiff(threadId, sessionId);
+                }
+            })
+            .catch(err => console.error('Auto-save failed:', err));
+        };
+        
+        // Strip diff markers from HTML
+        window.stripTipTapDiffMarkers = function(html) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            
+            // Remove diff-delete spans
+            temp.querySelectorAll('.diff-delete').forEach(el => el.remove());
+            
+            // Unwrap diff-insert spans
+            temp.querySelectorAll('.diff-insert').forEach(el => {
+                const parent = el.parentNode;
+                while (el.firstChild) {
+                    parent.insertBefore(el.firstChild, el);
+                }
+                parent.removeChild(el);
+            });
+            
+            return temp.innerHTML;
+        };
+        
+        // Refresh diff with cursor preservation
+        window.refreshTipTapDiff = function(threadId, sessionId) {
+            const editor = window.tiptapEditors[threadId];
+            if (!editor) return;
+            
+            // Save cursor position (character offset in plain text)
+            const cursorPos = editor.state.selection.anchor;
+            const wasActive = editor.isFocused;
+            
+            fetch('/editable_diff_html/' + sessionId + '/' + threadId)
+                .then(response => response.text())
+                .then(html => {
+                    if (html && !html.includes("No suggestion")) {
+                        // Set new content
+                        editor.commands.setContent(html, false);
+                        
+                        // Restore cursor position
+                        if (wasActive) {
+                            editor.commands.focus();
+                            
+                            // Try to restore position (clamped to document length)
+                            const docLength = editor.state.doc.content.size;
+                            const safePos = Math.min(cursorPos, docLength - 1);
+                            if (safePos > 0) {
+                                try {
+                                    editor.commands.setTextSelection(safePos);
+                                } catch (e) {
+                                    // If position is invalid, just focus at end
+                                    editor.commands.setTextSelection(docLength - 1);
+                                }
+                            }
+                        }
+                    }
+                })
+                .catch(err => console.error('Diff refresh failed:', err));
+        };
+        
+        // Format text commands
+        window.formatTipTapText = function(threadId, command) {
+            const editor = window.tiptapEditors[threadId];
+            if (!editor) return;
+            
+            editor.chain().focus();
+            
+            switch(command) {
+                case 'bold':
+                    editor.chain().focus().toggleBold().run();
+                    break;
+                case 'italic':
+                    editor.chain().focus().toggleItalic().run();
+                    break;
+                case 'underline':
+                    editor.chain().focus().toggleUnderline().run();
+                    break;
+                case 'superscript':
+                    editor.chain().focus().toggleSuperscript().run();
+                    break;
+                case 'subscript':
+                    editor.chain().focus().toggleSubscript().run();
+                    break;
+            }
+            
+            // Schedule save after formatting
+            const sessionId = editor.options.editorProps.attributes['data-session-id'];
+            window.scheduleTipTapAutoSave(threadId, sessionId);
+        };
+        
+        // Signal that TipTap is ready
+        window.tiptapReady = true;
+        window.dispatchEvent(new Event('tiptap-ready'));
+        console.log('TipTap editor loaded and ready');
+    </script>
+    
+    <!-- Global HTMX error handling - shows errors visibly -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Extract error message from HTML response
+            function extractError(html) {
+                // Try to find error text in the error template
+                const match = html.match(/text-red-700[^>]*>([^<]+)</);
+                if (match) return match[1];
+                // Fallback: strip HTML tags
+                return html.replace(/<[^>]*>/g, ' ').substring(0, 300);
+            }
+            
+            // Show error for failed HTMX requests
+            document.body.addEventListener('htmx:responseError', function(event) {
+                const msg = extractError(event.detail.xhr?.responseText || event.detail.error || 'Request failed');
+                alert('Error: ' + msg);
+                console.error('HTMX Error:', event.detail);
+            });
+            
+            // Show error for network failures
+            document.body.addEventListener('htmx:sendError', function(event) {
+                alert('Network error: Could not connect to server');
+                console.error('HTMX Send Error:', event.detail);
+            });
+            
+            // Debug: log all HTMX requests
+            document.body.addEventListener('htmx:beforeRequest', function(event) {
+                console.log('HTMX Request:', event.detail.pathInfo.requestPath, event.detail.requestConfig.parameters);
+            });
+        });
+    </script>
+    
+    <!-- Custom Tailwind config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Custom colors for the app
+                        'doc-bg': '#f8fafc',
+                        'card-bg': '#ffffff',
+                        'comment-bg': '#fef3c7',
+                        'context-bg': '#f1f5f9',
+                        'highlight': '#fef08a',
+                        'diff-del': '#fee2e2',
+                        'diff-ins': '#dcfce7',
+                        'diff-del-text': '#dc2626',
+                        'diff-ins-text': '#16a34a',
+                    },
+                    minWidth: {
+                        'app': '1200px',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom styles -->
+    <style>
+        /* Ensure minimum width with horizontal scroll */
+        body {
+            min-width: 1200px;
+            position: relative;
+        }
+        
+        /* Reset any margins that could affect modal positioning */
+        html, body {
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* Header must stretch to cover full scrollable area when content is wider than viewport */
+        header {
+            min-width: 1200px;
+            width: max(100%, 1200px);
+        }
+        
+        /* HTMX loading indicator - hidden by default, shown during requests */
+        .htmx-indicator {
+            display: none !important;
+            pointer-events: none !important;
+        }
+        .htmx-request .htmx-indicator,
+        .htmx-request.htmx-indicator {
+            display: flex !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Smooth transitions for HTMX swaps */
+        .htmx-swapping {
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        
+        /* Highlighted text (exact referenced text) */
+        mark {
+            background-color: #fef08a;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        
+        /* Diff styling */
+        .diff-del, .diff-delete {
+            text-decoration: line-through;
+            color: #dc2626;
+            background-color: #fee2e2;
+        }
+        .diff-ins, .diff-insert {
+            color: #16a34a;
+            background-color: #dcfce7;
+        }
+        
+        /* TipTap editor styling */
+        .tiptap-editor-container .ProseMirror {
+            min-height: 120px;
+            padding: 0.75rem;
+            outline: none;
+        }
+        .tiptap-editor-container .ProseMirror p {
+            margin: 0;
+        }
+        .tiptap-editor-container .ProseMirror:focus {
+            outline: none;
+        }
+        /* Ensure TipTap inherits text styling */
+        .tiptap-editor-container .ProseMirror strong {
+            font-weight: bold;
+        }
+        .tiptap-editor-container .ProseMirror em {
+            font-style: italic;
+        }
+        .tiptap-editor-container .ProseMirror u {
+            text-decoration: underline;
+        }
+        .tiptap-editor-container .ProseMirror sup {
+            vertical-align: super;
+            font-size: smaller;
+        }
+        .tiptap-editor-container .ProseMirror sub {
+            vertical-align: sub;
+            font-size: smaller;
+        }
+        
+        /* Collapsible sections */
+        details summary {
+            cursor: pointer;
+            user-select: none;
+        }
+        details summary::-webkit-details-marker {
+            display: none;
+        }
+        
+        /* Text overflow handling - prevent long strings from breaking layout */
+        .text-wrap-break {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        /* Apply to all content areas that might have long strings */
+        .p-2, .p-3, .p-4,
+        .bg-white, .bg-gray-50, .bg-yellow-50, .bg-blue-50,
+        textarea,
+        [class*="leading-relaxed"] {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+        
+        /* Header z-index is set via Tailwind class (z-20), modals use z-50 */
+        
+        /* Ensure modal overlays truly cover the entire viewport and are above everything */
+        #export-modal,
+        #settings-modal {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            margin: 0 !important;
+            z-index: 9999 !important;
+        }
+        
+        /* Table group styling - no overflow constraints to avoid scrollbars */
+        .table-group-container {
+            position: relative;
+        }
+        
+        .table-group-container table {
+            position: relative;
+        }
+        
+        /* Continuation indicators removed - the fake column lines don't align with real columns */
+        /* Future: consider pre-rendering adjacent rows with clip for proper alignment */
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-doc-bg min-h-screen">
+    <!-- Header (sticky) -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-20">
+        <div class="w-full px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <span class="text-2xl">📄</span>
+                <h1 class="text-xl font-semibold text-gray-800">Stet</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button id="settings-btn" 
+                        onclick="document.getElementById('settings-modal').classList.remove('hidden')"
+                        class="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition">
+                    ⚙️ Settings
+                </button>
+                <button id="export-btn" 
+                        class="px-4 py-1.5 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded-md transition disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                        disabled>
+                    📥 Export
+                </button>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 mt-8 py-4">
+        <div class="max-w-7xl mx-auto px-4 text-center text-sm text-gray-500">
+            Stet v2.0 • FastAPI + HTMX
+        </div>
+    </footer>
+    
+    <!-- Settings Modal -->
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-800">⚙️ Settings</h3>
+                <button onclick="document.getElementById('settings-modal').classList.add('hidden')"
+                        class="text-gray-400 hover:text-gray-600">
+                    ✕
+                </button>
+            </div>
+            <div class="px-6 py-4 space-y-6">
+                <!-- LLM Provider (populated dynamically from /llm-config) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">LLM Provider</label>
+                    <div id="provider-options" class="space-y-2">
+                        <!-- Populated by JavaScript -->
+                        <div class="text-sm text-gray-500">Loading providers...</div>
+                    </div>
+                </div>
+                
+                <!-- Ollama URL (shown when Ollama selected) -->
+                <div id="ollama-settings" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ollama URL</label>
+                    <input type="text" id="ollama-url" value="http://localhost:11434"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-1 mt-2">Ollama Model</label>
+                    <input type="text" id="ollama-model" value="llama3.1"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Enter the model name as shown by <code class="bg-gray-100 px-1 rounded">ollama list</code></p>
+                </div>
+                
+                <!-- API Key (shown when provider requires it) -->
+                <div id="api-key-section">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">OpenAI API Key</label>
+                    <input type="password" id="openai-api-key" 
+                           placeholder="sk-..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">Stored locally in your browser (not sent to our servers)</p>
+                </div>
+                
+                <!-- Model (populated dynamically based on provider) -->
+                <div id="model-section">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Model</label>
+                    <select id="openai-model" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <!-- Populated by JavaScript -->
+                    </select>
+                    <p id="model-info" class="mt-1 text-xs text-gray-500"></p>
+                </div>
+                
+                <!-- Default Instructions -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Instructions</label>
+                    <textarea id="default-instructions" rows="8"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Instructions for the LLM..."></textarea>
+                    <p class="mt-1 text-xs text-gray-500">These instructions apply to all threads. Can be overridden per-thread.</p>
+                </div>
+                
+                <!-- Session Management -->
+                <div class="border-t border-gray-200 pt-4">
+                    <h4 class="text-sm font-medium text-gray-700 mb-2">Session Management</h4>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Clear all saved session data</p>
+                            <p class="text-xs text-gray-500" id="session-info">Loading...</p>
+                        </div>
+                        <button onclick="showClearAllSessionsConfirm()" 
+                                class="px-3 py-1.5 text-sm bg-red-100 text-red-700 hover:bg-red-200 rounded-md transition">
+                            🗑️ Clear All Sessions
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 px-6 py-4 flex justify-end space-x-3">
+                <button onclick="document.getElementById('settings-modal').classList.add('hidden')"
+                        class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800">
+                    Close
+                </button>
+                <button onclick="saveSettings()" 
+                        class="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // LLM config cache (loaded from /llm-config)
+        let llmConfig = null;
+        
+        // Load LLM config from server
+        async function loadLLMConfig() {
+            try {
+                const response = await fetch('/llm-config');
+                llmConfig = await response.json();
+                
+                // Initialize defaults in localStorage if not already set
+                initializeDefaultSettings();
+                
+                populateProviders();
+                loadSavedSettings();
+            } catch (error) {
+                console.error('Failed to load LLM config:', error);
+                // Show error in provider options
+                document.getElementById('provider-options').innerHTML = 
+                    '<div class="text-sm text-red-500">Failed to load providers</div>';
+            }
+        }
+        
+        // Initialize localStorage with sensible defaults if user hasn't saved settings yet
+        function initializeDefaultSettings() {
+            if (!llmConfig) return;
+            
+            // Set default provider if not set
+            if (!localStorage.getItem('llm_provider')) {
+                const defaultProvider = llmConfig.providers[0]?.id || 'openai';
+                localStorage.setItem('llm_provider', defaultProvider);
+            }
+            
+            // Set default OpenAI model if not set
+            if (!localStorage.getItem('openai_model')) {
+                const openaiProvider = llmConfig.providers.find(p => p.id === 'openai');
+                if (openaiProvider) {
+                    const defaultModel = openaiProvider.default_model || openaiProvider.models[0]?.id || 'gpt-5-mini';
+                    localStorage.setItem('openai_model', defaultModel);
+                }
+            }
+            
+            // Set default Ollama URL if not set
+            if (!localStorage.getItem('ollama_url')) {
+                const ollamaProvider = llmConfig.providers.find(p => p.id === 'ollama');
+                localStorage.setItem('ollama_url', ollamaProvider?.default_url || 'http://localhost:11434');
+            }
+            
+            // Set default Ollama model if not set
+            if (!localStorage.getItem('ollama_model')) {
+                const ollamaProvider = llmConfig.providers.find(p => p.id === 'ollama');
+                localStorage.setItem('ollama_model', ollamaProvider?.default_model || 'llama3.1');
+            }
+            
+            // Set default instructions if not set
+            if (!localStorage.getItem('default_instructions')) {
+                localStorage.setItem('default_instructions', DEFAULT_INSTRUCTIONS);
+            }
+        }
+        
+        // Populate provider radio buttons from config
+        function populateProviders() {
+            const container = document.getElementById('provider-options');
+            container.innerHTML = '';
+            
+            llmConfig.providers.forEach((provider, index) => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center space-x-3';
+                label.innerHTML = `
+                    <input type="radio" name="llm_provider" value="${provider.id}" 
+                           ${index === 0 ? 'checked' : ''}
+                           class="h-4 w-4 text-blue-600 border-gray-300">
+                    <span class="text-sm text-gray-700">${provider.name}</span>
+                `;
+                container.appendChild(label);
+            });
+            
+            // Add event listeners to new radio buttons
+            document.querySelectorAll('input[name="llm_provider"]').forEach(radio => {
+                radio.addEventListener('change', onProviderChange);
+            });
+            
+            // Trigger initial update
+            onProviderChange();
+        }
+        
+        // Populate model dropdown based on selected provider
+        function populateModels(providerId) {
+            const select = document.getElementById('openai-model');
+            const modelInfo = document.getElementById('model-info');
+            select.innerHTML = '';
+            
+            const provider = llmConfig.providers.find(p => p.id === providerId);
+            if (!provider || !provider.models.length) {
+                select.innerHTML = '<option value="">No models configured</option>';
+                modelInfo.textContent = '';
+                return;
+            }
+            
+            provider.models.forEach((model, index) => {
+                const option = document.createElement('option');
+                option.value = model.id;
+                option.textContent = `${model.name} (${model.description})`;
+                if (model.id === provider.default_model || index === 0) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            
+            // Update model info
+            updateModelInfo();
+            
+            // Add change listener for model info updates
+            select.addEventListener('change', updateModelInfo);
+        }
+        
+        // Update model info text
+        function updateModelInfo() {
+            const providerId = document.querySelector('input[name="llm_provider"]:checked')?.value;
+            const modelId = document.getElementById('openai-model').value;
+            const modelInfo = document.getElementById('model-info');
+            
+            if (!providerId || !modelId || !llmConfig) {
+                modelInfo.textContent = '';
+                return;
+            }
+            
+            const provider = llmConfig.providers.find(p => p.id === providerId);
+            const model = provider?.models.find(m => m.id === modelId);
+            
+            if (model) {
+                const contextK = Math.round(model.context_window / 1000);
+                let info = `Context: ${contextK}K tokens`;
+                if (model.pricing) {
+                    info += ` • $${model.pricing.cost_per_1m_input}/1M in, $${model.pricing.cost_per_1m_output}/1M out`;
+                }
+                modelInfo.textContent = info;
+            } else {
+                modelInfo.textContent = '';
+            }
+        }
+        
+        // Handle provider change
+        function onProviderChange() {
+            const providerId = document.querySelector('input[name="llm_provider"]:checked')?.value;
+            if (!providerId || !llmConfig) return;
+            
+            const provider = llmConfig.providers.find(p => p.id === providerId);
+            const ollamaSettings = document.getElementById('ollama-settings');
+            const apiKeySection = document.getElementById('api-key-section');
+            const modelSection = document.getElementById('model-section');
+            
+            if (providerId === 'ollama') {
+                ollamaSettings.classList.remove('hidden');
+                apiKeySection.classList.add('hidden');
+                modelSection.classList.add('hidden');
+                
+                // Set default Ollama URL
+                if (provider.default_url) {
+                    const urlInput = document.getElementById('ollama-url');
+                    if (!urlInput.value || urlInput.value === 'http://localhost:11434') {
+                        urlInput.value = provider.default_url;
+                    }
+                }
+            } else {
+                ollamaSettings.classList.add('hidden');
+                modelSection.classList.remove('hidden');
+                
+                // Show/hide API key based on provider
+                if (provider.requires_api_key) {
+                    apiKeySection.classList.remove('hidden');
+                } else {
+                    apiKeySection.classList.add('hidden');
+                }
+                
+                // Populate models for this provider
+                populateModels(providerId);
+            }
+        }
+        
+        // Default instructions constant
+        const DEFAULT_INSTRUCTIONS = `You are an expert Medical Writer working on a scientific manuscript for a peer-reviewed journal.
+
+Your task is to address a reviewer's comment by:
+1. REVISING the target paragraph to address the comment
+2. DRAFTING a professional reply to the reviewer
+
+IMPORTANT GUIDELINES:
+- Preserve scientific accuracy and formal academic tone
+- Keep revisions minimal but sufficient to fully address the concern
+- Your reply should be concise, polite, and professional
+- If the original comment is in Japanese, still write your reply in English
+- Do not change content that is not relevant to the comment`;
+
+        // Simple settings storage (localStorage)
+        function saveSettings() {
+            const provider = document.querySelector('input[name="llm_provider"]:checked').value;
+            localStorage.setItem('llm_provider', provider);
+            
+            if (provider === 'openai') {
+                const apiKey = document.getElementById('openai-api-key').value;
+                const model = document.getElementById('openai-model').value;
+                if (apiKey) localStorage.setItem('openai_api_key', apiKey);
+                localStorage.setItem('openai_model', model);
+            } else if (provider === 'ollama') {
+                const ollamaUrl = document.getElementById('ollama-url').value;
+                const ollamaModel = document.getElementById('ollama-model').value;
+                localStorage.setItem('ollama_url', ollamaUrl);
+                localStorage.setItem('ollama_model', ollamaModel);
+            } else {
+                // For any other provider with models
+                const model = document.getElementById('openai-model').value;
+                localStorage.setItem(`${provider}_model`, model);
+            }
+            
+            // Save default instructions
+            const instructions = document.getElementById('default-instructions').value;
+            localStorage.setItem('default_instructions', instructions);
+            
+            // If a session is active, update server-side instructions too
+            const documentLoaded = document.getElementById('document-loaded');
+            const sessionId = documentLoaded ? documentLoaded.dataset.sessionId : null;
+            if (sessionId) {
+                fetch(`/update_instructions/${sessionId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `instructions=${encodeURIComponent(instructions)}`
+                }).then(response => {
+                    if (response.ok) {
+                        console.log('Session instructions updated on server');
+                    }
+                });
+            }
+            
+            // Update all non-custom thread instruction textareas to show new defaults
+            document.querySelectorAll('.thread-instructions[data-custom="false"]').forEach(textarea => {
+                textarea.value = instructions;
+            });
+            
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+        
+        // Load saved settings from localStorage
+        function loadSavedSettings() {
+            const savedProvider = localStorage.getItem('llm_provider');
+            const savedOpenaiModel = localStorage.getItem('openai_model');
+            const savedOllamaUrl = localStorage.getItem('ollama_url');
+            const savedOllamaModel = localStorage.getItem('ollama_model');
+            const savedInstructions = localStorage.getItem('default_instructions');
+            
+            // Set saved provider
+            if (savedProvider) {
+                const radio = document.querySelector(`input[name="llm_provider"][value="${savedProvider}"]`);
+                if (radio) {
+                    radio.checked = true;
+                    onProviderChange();
+                }
+            }
+            
+            // Set saved model (after provider change populates the dropdown)
+            if (savedOpenaiModel) {
+                const modelSelect = document.getElementById('openai-model');
+                if (modelSelect) {
+                    // Check if the saved model exists in options
+                    const option = modelSelect.querySelector(`option[value="${savedOpenaiModel}"]`);
+                    if (option) {
+                        modelSelect.value = savedOpenaiModel;
+                        updateModelInfo();
+                    }
+                }
+            }
+            
+            // Set Ollama settings
+            if (savedOllamaUrl) document.getElementById('ollama-url').value = savedOllamaUrl;
+            if (savedOllamaModel) document.getElementById('ollama-model').value = savedOllamaModel;
+            
+            // Load instructions (use saved or default)
+            const instructionsEl = document.getElementById('default-instructions');
+            if (instructionsEl) {
+                instructionsEl.value = savedInstructions || DEFAULT_INSTRUCTIONS;
+            }
+        }
+        
+        // Load settings on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadLLMConfig();
+        });
+        
+        // Save thread-specific instructions
+        function saveThreadInstructions(sessionId, threadId, instructions) {
+            const textarea = document.getElementById(`instructions-${threadId}`);
+            const defaultInstructions = localStorage.getItem('default_instructions') || DEFAULT_INSTRUCTIONS;
+            
+            // Check if this differs from session defaults
+            const isCustom = instructions.trim() !== defaultInstructions.trim();
+            
+            fetch(`/update_thread_instructions/${sessionId}/${threadId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `instructions=${encodeURIComponent(instructions)}`
+            }).then(response => {
+                if (response.ok) {
+                    // Update the data-custom attribute and status text
+                    textarea.dataset.custom = isCustom ? 'true' : 'false';
+                    const statusEl = textarea.closest('.mt-2').querySelector('p span, p');
+                    if (statusEl) {
+                        if (isCustom) {
+                            statusEl.innerHTML = '<span class="text-blue-600">✓ Custom instructions for this thread</span>';
+                        } else {
+                            statusEl.textContent = 'Using session defaults. Edit to customize for this thread.';
+                        }
+                    }
+                    console.log(`Thread ${threadId} instructions saved (custom: ${isCustom})`);
+                }
+            });
+        }
+        
+        // ===== Session Management Functions =====
+        
+        // Load and display session info when settings modal opens
+        async function loadSessionInfo() {
+            const sessionInfo = document.getElementById('session-info');
+            if (!sessionInfo) return;
+            
+            try {
+                const response = await fetch('/sessions/list');
+                const data = await response.json();
+                
+                if (data.count === 0) {
+                    sessionInfo.textContent = 'No saved sessions';
+                } else {
+                    sessionInfo.textContent = `${data.count} session(s), ${data.total_size_mb} MB total`;
+                }
+            } catch (error) {
+                sessionInfo.textContent = 'Could not load session info';
+                console.error('Error loading session info:', error);
+            }
+        }
+        
+        // Show confirmation for clearing all sessions
+        function showClearAllSessionsConfirm() {
+            if (confirm('Are you sure you want to delete ALL session data?\n\nThis will remove all saved progress for all documents and cannot be undone.')) {
+                clearAllSessions();
+            }
+        }
+        
+        // Clear all sessions
+        async function clearAllSessions() {
+            try {
+                const response = await fetch('/sessions/all', {
+                    method: 'DELETE'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Deleted ${data.deleted} session(s).`);
+                    // Refresh session info
+                    loadSessionInfo();
+                    // If we're on a document, redirect to home
+                    if (document.getElementById('document-loaded')) {
+                        window.location.href = '/';
+                    }
+                } else {
+                    alert('Some sessions could not be deleted: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error clearing sessions:', error);
+                alert('Failed to clear sessions');
+            }
+        }
+        
+        // Load session info when settings modal is opened
+        document.getElementById('settings-btn')?.addEventListener('click', loadSessionInfo);
+    </script>
+    
+    <!-- Loading overlay (shown during HTMX requests) -->
+    <div id="loading-overlay" 
+         class="htmx-indicator hidden fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50 pointer-events-none">
+        <div class="bg-white rounded-lg px-6 py-4 shadow-lg flex items-center space-x-3">
+            <svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-gray-700">Processing...</span>
+        </div>
+    </div>
+    
+    <!-- Batch generation overlay (has clickable cancel button) -->
+    <div id="batch-overlay" 
+         class="hidden fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg px-8 py-6 shadow-lg text-center">
+            <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p id="batch-progress-text" class="text-gray-700 mb-4">Generating suggestions...</p>
+            <button onclick="cancelBatchGeneration()" 
+                    id="batch-cancel-btn"
+                    class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition">
+                ⏹ Cancel
+            </button>
+        </div>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
